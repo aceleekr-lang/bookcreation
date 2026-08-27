@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>이야기의 문 — 마음을 읽는 치유 동화</title>
+<meta property="og:title" content="이야기의 문">
+<meta property="og:description" content="당신의 마음을 읽고, 당신만을 위한 치유 동화를 지어드립니다.">
+<meta property="og:image" content="https://REPLACE-WITH-YOUR-DOMAIN.vercel.app/assets/og.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0e1430; --deep:#1a2340; --deep2:#26325c;
+  --candle:#f0c36b; --candle-soft:#f8dfa8;
+  --paper:#f7eeda; --paper-dim:#e9ddc3;
+  --rose:#dd8f7e; --mint:#7fd0c6;
+  --line:rgba(240,195,107,.35);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Gowun Dodum',sans-serif; background:var(--ink); color:var(--paper);
+  overflow:hidden; position:fixed; inset:0; width:100%;
+  background:radial-gradient(120% 90% at 50% 110%, #232f57 0%, #141b38 45%, #0b1029 100%);
+}
+body.kid{
+  background:radial-gradient(120% 90% at 50% 110%, #33447f 0%, #1d2a5c 45%, #101740 100%);
+  --candle:#ffd166; --rose:#ff8e7a; --mint:#6ec8c0;
+}
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+.screen{position:fixed;inset:0;z-index:2;display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));text-align:center;
+  overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen.on{display:flex;animation:fadein .7s ease both}
+@keyframes fadein{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+h1,h2,.serif{font-family:'Gowun Batang',serif}
+.eyebrow{letter-spacing:.35em;font-size:.72rem;color:var(--candle-soft);opacity:.85;margin-bottom:14px}
+
+/* ── 입장: 빛나는 문 ── */
+.door{
+  width:min(46vw,180px);aspect-ratio:10/16;border-radius:999px 999px 6px 6px;position:relative;margin:26px auto;
+  border:2px solid var(--line);
+  background:linear-gradient(180deg,#2b3763,#1a2340);
+  box-shadow:0 0 60px rgba(240,195,107,.15), inset 0 0 40px rgba(0,0,0,.5);
+  transition:box-shadow .6s;
+}
+.door::before{ /* 문틈으로 새는 빛 */
+  content:"";position:absolute;left:50%;top:8%;bottom:0;width:3px;transform:translateX(-50%);
+  background:linear-gradient(180deg,var(--candle-soft),var(--candle));
+  box-shadow:0 0 24px 6px rgba(240,195,107,.55);
+  animation:breath 2.8s ease-in-out infinite;
+}
+.door::after{content:"";position:absolute;left:32%;top:52%;width:9px;height:9px;border-radius:50%;
+  background:var(--candle);box-shadow:0 0 12px rgba(240,195,107,.9)}
+@keyframes breath{0%,100%{opacity:.55}50%{opacity:1}}
+.tap:hover .door, .tap:active .door{box-shadow:0 0 90px rgba(240,195,107,.35), inset 0 0 40px rgba(0,0,0,.5)}
+.tap{cursor:pointer;background:none;border:none;color:inherit;font:inherit}
+.doorimg{display:block;margin:24px auto;width:min(62vw,240px);border-radius:16px;
+  box-shadow:0 0 60px rgba(240,195,107,.28), 0 18px 44px rgba(0,0,0,.5);transition:box-shadow .5s,transform .4s}
+.tap:hover .doorimg,.tap:active .doorimg{box-shadow:0 0 95px rgba(240,195,107,.5), 0 18px 44px rgba(0,0,0,.5);transform:scale(1.02)}
+.mode-card .doorimg{width:min(38vw,175px);margin:0 auto 14px}
+.pickcard .cardimg{width:92px;height:92px;object-fit:cover;border-radius:12px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.pickcard .orbimg{width:70px;height:70px;border-radius:50%;object-fit:cover;filter:drop-shadow(0 0 10px rgba(240,195,107,.3))}
+.pickcard.picked .cardimg,.pickcard.picked .orbimg{box-shadow:0 0 20px rgba(240,195,107,.55)}
+.hint{font-size:.9rem;opacity:.7;animation:breath 2.8s ease-in-out infinite}
+h1.title{font-size:clamp(1.9rem,6vw,3rem);font-weight:700;letter-spacing:.12em;
+  text-shadow:0 0 30px rgba(240,195,107,.35)}
+.sub{margin-top:10px;font-size:clamp(.9rem,2.6vw,1.05rem);opacity:.8;line-height:1.7}
+
+/* ── 문 열림 전환 오버레이 ── */
+#doorwipe{position:fixed;inset:0;z-index:50;display:none;pointer-events:none}
+#doorwipe.go{display:block}
+#doorwipe .panel{position:absolute;top:0;bottom:0;width:51%;background:#0a0f24;transition:transform 1.1s cubic-bezier(.7,0,.3,1)}
+#doorwipe .L{left:0;transform:translateX(0)} #doorwipe .R{right:0;transform:translateX(0)}
+#doorwipe.open .L{transform:translateX(-102%)} #doorwipe.open .R{transform:translateX(102%)}
+#doorwipe .glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%, rgba(248,223,168,.9), rgba(240,195,107,.25) 30%, transparent 60%);
+  opacity:0;transition:opacity .5s}
+#doorwipe.open .glow{opacity:1;transition:opacity .35s}
+
+/* ── 모드 선택 ── */
+.mode-wrap{display:flex;gap:clamp(18px,5vw,48px);margin-top:26px;flex-wrap:wrap;justify-content:center}
+.mode-card{cursor:pointer;background:none;border:none;color:inherit;font:inherit;transition:transform .3s}
+.mode-card:hover{transform:translateY(-6px)}
+.mode-card .door{width:min(34vw,150px);margin:0 auto 14px}
+.mode-card.kidd .door{background:linear-gradient(180deg,#3d68a8,#2a4f92);border-color:rgba(255,209,102,.5)}
+.mode-card.kidd .door::before{background:linear-gradient(180deg,#fff3c4,#ffd166);box-shadow:0 0 24px 6px rgba(255,209,102,.6)}
+.mode-card h2{font-size:1.25rem;margin-bottom:6px}
+.mode-card p{font-size:.85rem;opacity:.75;line-height:1.6}
+
+/* ── 카드 라운드 ── */
+.round-head{max-width:640px}
+.candles{display:flex;gap:14px;justify-content:center;margin-bottom:16px}
+.candle{width:10px;height:26px;border-radius:4px 4px 2px 2px;background:#3a4570;position:relative;transition:background .4s}
+.candle.lit{background:linear-gradient(180deg,var(--candle-soft),var(--candle))}
+.candle.lit::before{content:"";position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  width:8px;height:11px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+  background:radial-gradient(circle at 50% 70%, #fff6d8, var(--candle));
+  box-shadow:0 0 14px rgba(240,195,107,.9);animation:flick .6s ease-in-out infinite alternate}
+@keyframes flick{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-52%) scale(1.12)}}
+.round-q{font-size:clamp(1.15rem,4vw,1.6rem);line-height:1.5;font-weight:700}
+.round-note{font-size:.85rem;opacity:.7;margin-top:8px}
+.cards{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:720px;margin:26px auto 20px}
+.wcard{
+  font-family:'Gowun Batang',serif;font-size:clamp(.95rem,3vw,1.08rem);
+  padding:13px 20px;border-radius:999px;cursor:pointer;color:var(--paper);
+  background:rgba(255,255,255,.05);border:1px solid rgba(247,238,218,.22);
+  backdrop-filter:blur(4px);transition:all .25s;animation:float 5s ease-in-out infinite;
+}
+body.kid .wcard{font-size:clamp(1.05rem,3.6vw,1.2rem);padding:15px 24px}
+.wcard:nth-child(3n){animation-delay:-1.7s}.wcard:nth-child(3n+1){animation-delay:-3.2s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.wcard:hover{border-color:var(--line)}
+.wcard.picked{background:linear-gradient(135deg,rgba(240,195,107,.22),rgba(221,143,126,.18));
+  border-color:var(--candle);color:#fff;box-shadow:0 0 20px rgba(240,195,107,.35);animation:none;transform:scale(1.05)}
+.sense{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:620px;margin:26px auto 20px}
+.swatch{width:56px;height:56px;border-radius:50%;cursor:pointer;border:3px solid transparent;
+  box-shadow:inset 0 -6px 14px rgba(0,0,0,.25);transition:.25s;padding:0}
+.swatch.picked{border-color:#fff;box-shadow:0 0 20px rgba(255,255,255,.55), inset 0 -6px 14px rgba(0,0,0,.25);transform:scale(1.14)}
+.pickcard{font:inherit;width:104px;padding:14px 8px 12px;border-radius:16px;cursor:pointer;color:var(--paper);
+  background:rgba(255,255,255,.05);border:1px solid rgba(247,238,218,.2);
+  display:flex;flex-direction:column;align-items:center;gap:9px;transition:.25s}
+.pickcard svg{width:54px;height:54px;stroke:var(--paper);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.pickcard .lbl{font-size:.78rem;opacity:.88;line-height:1.4}
+.pickcard .orb{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.25rem;
+  background:radial-gradient(circle at 35% 28%, rgba(255,255,255,.4), rgba(255,255,255,.06));border:1px solid rgba(247,238,218,.25)}
+.pickcard.picked{border-color:var(--candle);background:linear-gradient(135deg,rgba(240,195,107,.2),rgba(221,143,126,.15));
+  box-shadow:0 0 20px rgba(240,195,107,.35);transform:translateY(-3px)}
+.pickcard.picked svg{stroke:var(--candle-soft)}
+.btn{
+  font:inherit;font-weight:700;cursor:pointer;border:none;border-radius:999px;
+  padding:15px 42px;font-size:1.05rem;color:#231a08;
+  background:linear-gradient(135deg,var(--candle-soft),var(--candle));
+  box-shadow:0 6px 24px rgba(240,195,107,.35);transition:opacity .3s,transform .2s;
+}
+.btn:disabled{opacity:.28;cursor:default;box-shadow:none}
+.btn:not(:disabled):active{transform:scale(.96)}
+.btn.ghost{background:none;color:var(--paper);border:1px solid rgba(247,238,218,.35);box-shadow:none;font-weight:400}
+
+/* ── 로딩 ── */
+.load-door{width:min(40vw,150px)}
+#loadmsg{margin-top:22px;font-size:1.05rem;min-height:1.6em}
+.dots::after{content:"";animation:dots 1.5s steps(4) infinite}
+@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+#loadread{margin-top:14px;font-size:.88rem;opacity:.75;line-height:1.8;max-width:520px}
+
+/* ── 동화책 뷰어 ── */
+#scr-book{justify-content:flex-start;padding-top:max(14px,env(safe-area-inset-top))}
+.bookbar{display:flex;gap:8px;align-items:center;justify-content:space-between;width:100%;max-width:1060px;margin-bottom:10px}
+.bookbar .bt{font:inherit;font-size:.82rem;padding:8px 14px;border-radius:999px;cursor:pointer;
+  background:rgba(255,255,255,.07);border:1px solid rgba(247,238,218,.25);color:var(--paper)}
+.bookbar .bt:hover{border-color:var(--line)}
+.book{width:100%;max-width:1060px;flex:1;display:flex;flex-direction:column;min-height:0}
+.stage{flex:1;position:relative;min-height:0}
+.page{position:absolute;inset:0;display:none}
+.page.cur{display:block;animation:pagein .55s ease both}
+@keyframes pagein{from{opacity:0;transform:translateX(26px) rotateY(6deg)}to{opacity:1;transform:none}}
+.spread{height:100%;display:grid;grid-template-columns:1fr 1.05fr;gap:0;border-radius:14px;overflow:hidden;
+  background:var(--paper);color:#3a2f22;box-shadow:0 20px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(0,0,0,.06)}
+.art{position:relative;background:#ddd2ba;min-height:0}
+.art img{width:100%;height:100%;object-fit:cover;display:block}
+.art .ph{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;
+  color:#8a7a5c;font-size:.9rem;background:repeating-linear-gradient(45deg,#e5dac2,#e5dac2 12px,#ded2b8 12px,#ded2b8 24px);
+  background-size:200% 200%;animation:shimmer 2.2s linear infinite}
+@keyframes shimmer{from{background-position:0 0}to{background-position:60px 60px}}
+.art .retry{font:inherit;font-size:.8rem;padding:7px 14px;border-radius:999px;border:1px solid #b9a87f;background:#f2e8cf;cursor:pointer;color:#6b5a35}
+.txt{padding:clamp(20px,3.5vw,46px);overflow-y:auto;display:flex;flex-direction:column;justify-content:center}
+.txt .chap{font-size:.72rem;letter-spacing:.3em;color:#a3865a;margin-bottom:14px}
+.txt .body{font-family:'Gowun Batang',serif;font-size:clamp(1rem,1.7vw,1.13rem);line-height:2.05;white-space:pre-wrap;text-align:left}
+body.kid .txt .body{font-size:clamp(1.08rem,2vw,1.25rem);line-height:2.15}
+.txt h2.cover-t{font-size:clamp(1.7rem,3.4vw,2.5rem);line-height:1.5;margin-bottom:16px;color:#4a3617}
+.txt .cover-s{font-size:.95rem;color:#8a7350;line-height:1.8}
+.closing-page .txt{align-items:center;text-align:center}
+.rx{margin-top:20px;padding:18px 20px;border:1px dashed #c9b184;border-radius:12px;font-size:.9rem;line-height:1.9;color:#6b5a35;text-align:left}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 4px 2px}
+.nav .arrow{font:inherit;width:46px;height:46px;border-radius:50%;cursor:pointer;font-size:1.2rem;
+  background:rgba(255,255,255,.08);border:1px solid rgba(247,238,218,.3);color:var(--paper)}
+.nav .arrow:disabled{opacity:.25;cursor:default}
+.pgdots{display:flex;gap:8px}
+.pgdots i{width:8px;height:8px;border-radius:50%;background:rgba(247,238,218,.25);transition:all .3s}
+.pgdots i.cur{background:var(--candle);box-shadow:0 0 8px rgba(240,195,107,.7)}
+
+/* 스크롤 모드 */
+.book.scroll .stage{overflow-y:auto}
+.book.scroll .page{position:static;display:block;margin-bottom:26px;animation:none}
+.book.scroll .spread{height:auto;grid-template-columns:1fr}
+.book.scroll .art{aspect-ratio:2/3;max-height:70vh}
+.book.scroll .nav{display:none}
+
+/* 모바일 세로 */
+@media (max-width:760px), (orientation:portrait){
+  .spread{grid-template-columns:1fr;grid-template-rows:minmax(0,1.15fr) minmax(0,1fr)}
+  .txt{justify-content:flex-start}
+  .txt .body{line-height:1.95}
+}
+#sndbtn{position:fixed;top:max(12px,env(safe-area-inset-top));right:14px;z-index:60;width:42px;height:42px;border-radius:50%;
+  cursor:pointer;font-size:1.05rem;background:rgba(10,15,36,.55);border:1px solid rgba(247,238,218,.3);color:var(--paper)}
+.errbox{margin-top:16px;font-size:.9rem;color:#f3b8a6;line-height:1.7;max-width:480px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<button id="sndbtn" aria-label="소리 켜기/끄기">♪</button>
+
+<div id="doorwipe"><div class="glow"></div><div class="panel L"></div><div class="panel R"></div></div>
+
+<!-- 1. 입장 -->
+<section class="screen on" id="scr-enter">
+  <p class="eyebrow">MIND · TALE</p>
+  <h1 class="title">이야기의 문</h1>
+  <p class="sub">문 너머에는 당신의 마음을 닮은 이야기가 살고 있어요.<br>몇 개의 단어만 고르면, 당신만을 위한 동화가 지어집니다.</p>
+  <button class="tap" id="enterBtn"><img class="doorimg" src="assets/door-main.webp" alt="빛나는 이야기의 문"><p class="hint">문을 두드려 주세요</p></button>
+</section>
+
+<!-- 2. 모드 선택 -->
+<section class="screen" id="scr-mode">
+  <p class="eyebrow">어느 문으로 들어갈까요</p>
+  <h2 class="round-q serif">두 개의 문이 있어요</h2>
+  <div class="mode-wrap">
+    <button class="mode-card kidd" data-mode="kid"><img class="doorimg" src="assets/door-kid.webp" alt="아이의 문">
+      <h2 class="serif">아이의 문</h2><p>알록달록한 그림과<br>쉬운 말로 지은 동화</p></button>
+    <button class="mode-card" data-mode="adult"><img class="doorimg" src="assets/door-adult.webp" alt="어른의 문">
+      <h2 class="serif">어른의 문</h2><p>마음 깊은 곳을 어루만지는<br>은유의 동화</p></button>
+  </div>
+</section>
+
+<!-- 3. 카드 라운드 -->
+<section class="screen" id="scr-cards">
+  <div class="round-head">
+    <div class="candles" id="candles"></div>
+    <h2 class="round-q serif" id="roundQ"></h2>
+    <p class="round-note" id="roundNote"></p>
+  </div>
+  <div class="cards" id="cardGrid"></div>
+  <button class="btn" id="nextBtn" disabled>다음</button>
+</section>
+
+<!-- 4. 로딩 -->
+<section class="screen" id="scr-loading">
+  <div class="door load-door"></div>
+  <p id="loadmsg" class="serif dots">마음의 별자리를 읽는 중</p>
+  <p id="loadread"></p>
+  <div class="errbox" id="loaderr" style="display:none"></div>
+</section>
+
+<!-- 5. 동화책 -->
+<section class="screen" id="scr-book">
+  <div class="bookbar">
+    <button class="bt" id="homeBtn">↩ 처음으로</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="bt" id="viewBtn">≡ 이어보기</button>
+      <button class="bt" id="dlTxt">글 저장</button>
+      <button class="bt" id="dlImg">이 그림 저장</button>
+      <button class="bt" id="dlBook">동화책 저장</button>
+    </div>
+  </div>
+  <div class="book" id="book">
+    <div class="stage" id="stage"></div>
+    <div class="nav">
+      <button class="arrow" id="prevPg" aria-label="이전 장">‹</button>
+      <div class="pgdots" id="pgdots"></div>
+      <button class="arrow" id="nextPg" aria-label="다음 장">›</button>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ═══════════ 사운드 (Web Audio 합성 — 파일 불필요) ═══════════ */
+const Snd = {
+  ctx:null, muted:false, amb:null,
+  boot(){ if(this.ctx) return;
+    this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+    this.master = this.ctx.createGain(); this.master.gain.value=.9; this.master.connect(this.ctx.destination);
+  },
+  env(t=0.3,peak=.25){ const g=this.ctx.createGain(); const n=this.ctx.currentTime;
+    g.gain.setValueAtTime(0,n); g.gain.linearRampToValueAtTime(peak,n+.02); g.gain.exponentialRampToValueAtTime(.0001,n+t);
+    g.connect(this.master); return g; },
+  tone(freq,type,t,peak){ if(!this.ctx||this.muted) return; const o=this.ctx.createOscillator();
+    o.type=type; o.frequency.value=freq; o.connect(this.env(t,peak)); o.start(); o.stop(this.ctx.currentTime+t); },
+  ting(){ this.tone(1046,'sine',.5,.18); this.tone(1568,'sine',.4,.08); },
+  tick(){ this.tone(330,'sine',.12,.1); },
+  door(){ if(!this.ctx||this.muted) return; const o=this.ctx.createOscillator(); const n=this.ctx.currentTime;
+    o.type='sine'; o.frequency.setValueAtTime(180,n); o.frequency.exponentialRampToValueAtTime(720,n+1);
+    o.connect(this.env(1.2,.15)); o.start(); o.stop(n+1.2);
+    this.tone(523,'triangle',1.4,.06); },
+  page(){ if(!this.ctx||this.muted) return; const n=this.ctx.currentTime;
+    const buf=this.ctx.createBuffer(1,this.ctx.sampleRate*.25,this.ctx.sampleRate);
+    const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+    const src=this.ctx.createBufferSource(); src.buffer=buf;
+    const f=this.ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.setValueAtTime(900,n); f.frequency.exponentialRampToValueAtTime(2400,n+.2);
+    src.connect(f); f.connect(this.env(.25,.14)); src.start(); },
+  chime(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>this.tone(f,'sine',.8,.12),i*140)); },
+  preview(kind){ this.boot(); if(this.muted) return;
+    if(kind==='calm'){ this.tone(220,'sine',1.6,.12); this.tone(277,'sine',1.6,.08); this.tone(330,'sine',1.4,.05); }
+    else if(kind==='playful'){ [523,659,784,659,880].forEach((f,i)=>setTimeout(()=>this.tone(f,'triangle',.22,.16),i*130)); }
+    else if(kind==='deep'){ this.tone(98,'sine',2.2,.2); this.tone(196,'sine',2,.07); }
+    else if(kind==='sparkle'){ [1568,1319,1760,2093].forEach((f,i)=>setTimeout(()=>this.tone(f,'sine',.7,.09),i*160)); } },
+  ambient(on){ if(!this.ctx) return;
+    if(!on){ if(this.amb){this.amb.g.gain.linearRampToValueAtTime(0,this.ctx.currentTime+1); this.amb=null;} return; }
+    if(this.amb||this.muted) return;
+    const g=this.ctx.createGain(); g.gain.value=0; g.connect(this.master);
+    const mk=(f,det)=>{const o=this.ctx.createOscillator();o.type='sine';o.frequency.value=f;o.detune.value=det;o.connect(g);o.start();return o;};
+    const os=[mk(110,0),mk(164.8,4),mk(220,-3)];
+    g.gain.linearRampToValueAtTime(.035,this.ctx.currentTime+3);
+    const lfo=this.ctx.createOscillator(), lg=this.ctx.createGain();
+    lfo.frequency.value=.08; lg.gain.value=.015; lfo.connect(lg); lg.connect(g.gain); lfo.start();
+    this.amb={g,os,lfo};
+  }
+};
+const sndbtn=document.getElementById('sndbtn');
+sndbtn.onclick=()=>{ Snd.boot(); Snd.muted=!Snd.muted; sndbtn.textContent=Snd.muted?'∅':'♪';
+  if(Snd.muted) Snd.ambient(false); else Snd.ambient(true); };
+
+/* ═══════════ 별 캔버스 ═══════════ */
+const cv=document.getElementById('stars'), cx=cv.getContext('2d');
+let stars=[];
+function seed(){ cv.width=innerWidth*devicePixelRatio; cv.height=innerHeight*devicePixelRatio;
+  stars=Array.from({length:Math.min(140,innerWidth/4)},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,
+    r:Math.random()*1.6+.4,p:Math.random()*Math.PI*2,s:.5+Math.random()}));}
+seed(); addEventListener('resize',seed);
+(function loop(t){ cx.clearRect(0,0,cv.width,cv.height);
+  for(const s of stars){ const a=.25+.55*Math.abs(Math.sin(t/1400*s+s.p));
+    cx.beginPath(); cx.arc(s.x,s.y,s.r*devicePixelRatio,0,7); cx.fillStyle=`rgba(248,223,168,${a})`; cx.fill(); }
+  requestAnimationFrame(loop); })(0);
+
+/* ═══════════ 감각 선택 데이터 ═══════════
+   색: 명도→쾌·불쾌, 채도→각성 (색채-정서 연구) / 형태: 곡선 선호·각형=긴장 (Bar & Neta, 부바-키키)
+   공간: 전망-은신 이론(Appleton) — 은신처=안전, 전망=자율 / 소리: 템포·음역 선호→각성 수준 */
+const SENSE={
+colors:[
+ {w:'노랑',c:'#FFD34D',v:.7,a:.5,t:'warm'},{w:'주황',c:'#FF9950',v:.6,a:.6,t:'warm'},
+ {w:'빨강',c:'#E85A4F',v:.2,a:.9,t:'warm'},{w:'분홍',c:'#F5A8BC',v:.6,a:.1,t:'warm'},
+ {w:'연두',c:'#9CD46A',v:.6,a:.2,t:'warm'},{w:'초록',c:'#4E9B6E',v:.5,a:-.3,t:'cool'},
+ {w:'하늘',c:'#7EC4E8',v:.5,a:-.2,t:'cool'},{w:'파랑',c:'#3E6DB5',v:.1,a:-.4,t:'cool'},
+ {w:'보라',c:'#8B6FC0',v:.1,a:0,t:'cool'},{w:'남색',c:'#2E3A6E',v:-.3,a:-.5,t:'cool'},
+ {w:'회색',c:'#9A9AA5',v:-.4,a:-.4,t:'cool'},{w:'갈색',c:'#8A6A4F',v:0,a:-.3,t:'warm'}],
+shapes:[
+ {w:'몽글몽글',ko:'둥근 형태',k:'round',en:'soft rounded organic forms',
+  svg:'<circle cx="25" cy="29" r="13"/><circle cx="41" cy="24" r="9"/><circle cx="36" cy="41" r="7"/>'},
+ {w:'뾰족뾰족',ko:'뾰족한 형태',k:'spiky',en:'dynamic angular shapes with crystalline edges',
+  svg:'<path d="M32 8 38 25 56 25 42 36 47 54 32 43 17 54 22 36 8 25 26 25 Z"/>'},
+ {w:'반듯반듯',ko:'반듯한 질서',k:'grid',en:'orderly balanced geometric composition',
+  svg:'<rect x="12" y="12" width="17" height="17" rx="3"/><rect x="35" y="12" width="17" height="17" rx="3"/><rect x="12" y="35" width="17" height="17" rx="3"/><rect x="35" y="35" width="17" height="17" rx="3"/>'},
+ {w:'빙글빙글',ko:'안으로 도는 나선',k:'spiral',en:'gentle spiral motifs drawing quietly inward',
+  svg:'<path d="M34 32 a3 3 0 1 0 -3 3 a8 8 0 1 0 -8 -8 a14 14 0 1 0 14 -14 a21 21 0 1 0 -21 21" transform="translate(6 3)"/>'},
+ {w:'출렁출렁',ko:'흐르는 물결',k:'wave',en:'flowing wave lines with fluid rhythm',
+  svg:'<path d="M7 24 q7 -9 14 0 t14 0 t14 0 t8 0"/><path d="M7 40 q7 -9 14 0 t14 0 t14 0 t8 0"/>'},
+ {w:'쭉 뻗은',ko:'곧게 나아가는 선',k:'arrow',en:'clear upward directional lines',
+  svg:'<path d="M14 50 50 14"/><path d="M33 14 50 14 50 31"/>'}],
+spaces:[
+ {w:'포근한 다락방',img:'assets/space-attic.webp',n:'safety',en:'a cozy sheltered attic nook',
+  svg:'<path d="M8 30 32 10 56 30"/><path d="M14 30 v22 h36 v-22"/><circle cx="32" cy="41" r="5"/>'},
+ {w:'탁 트인 언덕',img:'assets/space-hill.webp',n:'autonomy',en:'a wide open hill under a big sky',
+  svg:'<path d="M4 46 q28 -20 56 0"/><circle cx="45" cy="17" r="7"/><path d="M14 30 h8 M10 24 h6"/>'},
+ {w:'높은 산꼭대기',img:'assets/space-peak.webp',n:'competence',en:'a summit reached after a long climb',
+  svg:'<path d="M8 52 28 15 40 34 47 24 58 52 Z"/><path d="M28 15 V6 l9 3 -9 3"/>'},
+ {w:'모닥불 곁',img:'assets/space-fire.webp',n:'relatedness',en:'gathered close around a warm campfire',
+  svg:'<path d="M32 22 q9 9 0 19 q-9 -10 0 -19"/><path d="M18 50 h28"/><circle cx="11" cy="43" r="4"/><circle cx="53" cy="43" r="4"/>'},
+ {w:'숲속 오솔길',img:'assets/space-path.webp',n:'autonomy',en:'a winding path into a quiet forest',
+  svg:'<path d="M27 55 q11 -12 -2 -22 q-9 -9 7 -19"/><circle cx="13" cy="19" r="7"/><circle cx="48" cy="15" r="8"/><circle cx="51" cy="35" r="6"/>'},
+ {w:'비 오는 날 창가 안쪽',img:'assets/space-window.webp',n:'safety',en:'inside by a rainy window, warm and dry',
+  svg:'<rect x="15" y="9" width="34" height="45" rx="3"/><path d="M32 9 V54 M15 31 H49"/><path d="M22 16 l-3 7 M41 20 l-3 7"/>'}],
+sounds:[
+ {w:'잔잔한 물결',img:'assets/sound-calm.webp',ko:'잔잔함',k:'calm',icon:'〰'},
+ {w:'통통 튀는 방울',img:'assets/sound-playful.webp',ko:'경쾌함',k:'playful',icon:'◔'},
+ {w:'깊은 울림',img:'assets/sound-deep.webp',ko:'깊은 울림',k:'deep',icon:'◍'},
+ {w:'반짝이는 종',img:'assets/sound-sparkle.webp',ko:'반짝임',k:'sparkle',icon:'✦'}]
+};
+
+/* ═══════════ 단어 은행 (심리 좌표 포함) ═══════════
+   감정: v=쾌(−1~1), a=각성(−1~1) — Russell 정서 원형 모델
+   바람: need — 자기결정이론 3욕구 + 안전(매슬로) */
+const BANK={
+kid:{
+ emotions:[
+  {w:'신나요',v:.8,a:.8},{w:'궁금해요',v:.6,a:.5},{w:'포근해요',v:.7,a:-.4},{w:'자랑스러워요',v:.8,a:.3},
+  {w:'두근두근해요',v:.4,a:.8},{w:'심심해요',v:-.3,a:-.6},{w:'부끄러워요',v:-.2,a:.3},{w:'슬퍼요',v:-.7,a:-.3},
+  {w:'무서워요',v:-.7,a:.7},{w:'화가 나요',v:-.6,a:.8},{w:'외로워요',v:-.6,a:-.4},{w:'짜증나요',v:-.5,a:.6}],
+ desires:[
+  {w:'하늘을 훨훨 날고 싶어요',n:'autonomy'},{w:'친구가 많으면 좋겠어요',n:'relatedness'},
+  {w:'최고가 되고 싶어요',n:'competence'},{w:'나만의 비밀기지를 갖고 싶어요',n:'autonomy'},
+  {w:'칭찬을 듬뿍 받고 싶어요',n:'competence'},{w:'꼭 안아주면 좋겠어요',n:'safety'},
+  {w:'내 맘대로 하고 싶어요',n:'autonomy'},{w:'힘이 세지고 싶어요',n:'competence'},
+  {w:'가족이랑 오래오래 놀고 싶어요',n:'relatedness'},{w:'새로운 곳에 가보고 싶어요',n:'autonomy'},
+  {w:'무서운 게 없어졌으면 해요',n:'safety'},{w:'내 얘기를 들어줬으면 해요',n:'relatedness'}],
+ scenes:[
+  {w:'반짝이는 별하늘',p:'cool'},{w:'깊고 파란 바다',p:'cool'},{w:'숲속 오두막',p:'warm'},{w:'알록달록 무지개',p:'warm'},
+  {w:'눈 내리는 밤',p:'cool'},{w:'고소한 빵집',p:'warm'},{w:'씽씽 우주선',p:'cool'},{w:'향기로운 꽃밭',p:'warm'},
+  {w:'용이 사는 성',p:'warm'},{w:'바닷가 모래성',p:'warm'},{w:'구름 위 산책',p:'cool'},{w:'비밀의 문',p:'warm'}]
+},
+adult:{
+ emotions:[
+  {w:'고요함',v:.4,a:-.6},{w:'설렘',v:.7,a:.6},{w:'안도',v:.6,a:-.4},{w:'벅참',v:.8,a:.6},
+  {w:'그리움',v:-.2,a:-.3},{w:'쓸쓸함',v:-.5,a:-.4},{w:'공허함',v:-.6,a:-.6},{w:'무기력',v:-.6,a:-.7},
+  {w:'피로',v:-.4,a:-.5},{w:'불안',v:-.6,a:.6},{w:'초조함',v:-.5,a:.7},{w:'분노',v:-.7,a:.8}],
+ desires:[
+  {w:'훌쩍 떠나고 싶다',n:'autonomy'},{w:'인정받고 싶다',n:'competence'},{w:'누군가에게 기대고 싶다',n:'relatedness'},
+  {w:'내 뜻대로 살고 싶다',n:'autonomy'},{w:'무언가 해내고 싶다',n:'competence'},{w:'깊이 연결되고 싶다',n:'relatedness'},
+  {w:'아무 걱정 없이 쉬고 싶다',n:'safety'},{w:'다시 시작하고 싶다',n:'autonomy'},{w:'쓸모 있는 사람이고 싶다',n:'competence'},
+  {w:'있는 그대로 이해받고 싶다',n:'relatedness'},{w:'안전하게 지켜지고 싶다',n:'safety'},{w:'다 잊고 깊이 잠들고 싶다',n:'safety'}],
+ scenes:[
+  {w:'새벽의 바다',p:'cool'},{w:'오래된 서점',p:'warm'},{w:'비 오는 창가',p:'cool'},{w:'사막의 별',p:'cool'},
+  {w:'안개 낀 숲',p:'cool'},{w:'홀로 선 등대',p:'cool'},{w:'골목 끝 오래된 식당',p:'warm'},{w:'끝없는 설원',p:'cool'},
+  {w:'낡은 완행열차',p:'warm'},{w:'옥상 위 작은 정원',p:'warm'},{w:'심야의 도시 불빛',p:'cool'},{w:'절벽 위 하얀 집',p:'warm'}]
+}};
+
+const ROUNDS=[
+ {key:'colors',type:'color',pick:2, kid:'마음이 끌리는 색을\n두 개 골라볼까?', adult:'지금 마음에 와닿는 색\n두 가지를 골라주세요',
+  note:'예쁜 색 말고, 그냥 끌리는 색이면 돼요.'},
+ {key:'shape',type:'shape',pick:1, kid:'제일 마음에 드는 모양은 뭐야?', adult:'가장 눈이 머무는 형태\n하나를 골라주세요',
+  note:'이유는 몰라도 괜찮아요.'},
+ {key:'space',type:'space',pick:1, kid:'어디에 있으면 제일 편할 것 같아?', adult:'지금 머물고 싶은 자리는\n어디인가요',
+  note:'상상 속에서 골라보세요.'},
+ {key:'sound',type:'sound',pick:1, kid:'눌러서 들어보고\n제일 좋은 소리를 골라줘', adult:'눌러서 들어보고\n마음에 닿는 소리를 골라주세요',
+  note:'소리가 안 나면 오른쪽 위 ♪ 버튼을 확인해 주세요.'},
+ {key:'emotions',type:'word',pick:3, kid:'요즘 네 마음이랑 닮은 말을\n세 개 골라볼까?', adult:'요즘의 마음과 가장 가까운 단어\n세 개를 골라주세요',
+  note:'맞고 틀린 답은 없어요. 그냥 끌리는 대로.'},
+ {key:'desires',type:'word',pick:3, kid:'요술램프가 소원을 들어준대!\n세 가지만 골라봐', adult:'지금 마음이 조용히 바라는 것\n세 개를 골라주세요',
+  note:'말이 안 되는 소원이어도 괜찮아요.'},
+ {key:'scenes',type:'word',pick:3, kid:'어떤 곳으로 떠나고 싶어?\n세 군데 골라줘', adult:'눈을 감았을 때 머물고 싶은 장면\n세 개를 골라주세요',
+  note:'이 장면들이 동화의 배경이 됩니다.'}
+];
+
+/* ═══════════ 상태 & 화면 전환 ═══════════ */
+const EMPTY_PICKS=()=>({colors:[],shape:[],space:[],sound:[],emotions:[],desires:[],scenes:[]});
+const S={mode:null, round:0, picks:EMPTY_PICKS(), story:null, images:[null,null,null,null], analysis:null, page:0};
+const $=id=>document.getElementById(id);
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on')); $(id).classList.add('on'); }
+function doorWipe(cb){ const w=$('doorwipe'); w.classList.add('go'); w.classList.remove('open');
+  Snd.door(); requestAnimationFrame(()=>requestAnimationFrame(()=>{ cb(); w.classList.add('open');
+    setTimeout(()=>w.classList.remove('go'),1200); })); }
+
+$('enterBtn').onclick=()=>{ Snd.boot(); if(!Snd.muted) Snd.ambient(true); Snd.ting(); show('scr-mode'); };
+document.querySelectorAll('.mode-card').forEach(b=>b.onclick=()=>{
+  S.mode=b.dataset.mode; document.body.classList.toggle('kid',S.mode==='kid');
+  S.round=0; S.picks=EMPTY_PICKS();
+  doorWipe(()=>{ renderRound(); show('scr-cards'); });
+});
+
+/* ═══════════ 카드 라운드 ═══════════ */
+function renderRound(){
+  const r=ROUNDS[S.round];
+  const cd=$('candles'); cd.innerHTML='';
+  for(let i=0;i<ROUNDS.length;i++){ const c=document.createElement('span');
+    c.className='candle'+(i<S.round?' lit':''); cd.appendChild(c); }
+  $('roundQ').textContent=''; (S.mode==='kid'?r.kid:r.adult).split('\n').forEach((line,i)=>{
+    if(i) $('roundQ').appendChild(document.createElement('br'));
+    $('roundQ').appendChild(document.createTextNode(line)); });
+  $('roundNote').textContent=r.note;
+  const grid=$('cardGrid'); grid.innerHTML='';
+  grid.className = r.type==='word' ? 'cards' : 'sense';
+  const items = r.type==='word' ? BANK[S.mode][r.key]
+    : SENSE[{color:'colors',shape:'shapes',space:'spaces',sound:'sounds'}[r.type]];
+  items.forEach(item=>{
+    let b=document.createElement('button');
+    if(r.type==='color'){ b.className='swatch'; b.style.background=item.c; b.title=item.w; b.setAttribute('aria-label',item.w); }
+    else if(r.type==='word'){ b.className='wcard'; b.textContent=item.w; }
+    else { b.className='pickcard';
+      if(item.img){ const im=document.createElement('img'); im.src=item.img; im.alt='';
+        im.className=r.type==='sound'?'orbimg':'cardimg'; b.appendChild(im); }
+      else if(r.type==='sound'){ const o=document.createElement('div'); o.className='orb'; o.textContent=item.icon; b.appendChild(o); }
+      else { b.innerHTML='<svg viewBox="0 0 64 64" aria-hidden="true">'+item.svg+'</svg>'; }
+      const l=document.createElement('span'); l.className='lbl'; l.textContent=item.w; b.appendChild(l); }
+    b.onclick=()=>{
+      if(r.type==='sound') Snd.preview(item.k);
+      const arr=S.picks[r.key]; const i=arr.indexOf(item.w);
+      if(i>=0){ arr.splice(i,1); b.classList.remove('picked'); if(r.type!=='sound') Snd.tick(); }
+      else if(r.pick===1){ arr.length=0; grid.querySelectorAll('.picked').forEach(x=>x.classList.remove('picked'));
+        arr.push(item.w); b.classList.add('picked'); if(r.type!=='sound') Snd.ting(); }
+      else if(arr.length<r.pick){ arr.push(item.w); b.classList.add('picked'); if(r.type!=='sound') Snd.ting(); }
+      $('nextBtn').disabled = arr.length!==r.pick;
+      $('nextBtn').textContent = S.round===ROUNDS.length-1 ? '이야기의 문 열기' : '다음';
+    };
+    grid.appendChild(b);
+  });
+  $('nextBtn').disabled=true; $('nextBtn').textContent='다음';
+}
+$('nextBtn').onclick=()=>{
+  if(S.round<ROUNDS.length-1){ S.round++; Snd.page(); renderRound(); }
+  else { S.analysis=analyze(); startCreate(); }
+};
+
+/* ═══════════ 심리 판정 엔진 ═══════════ */
+function analyze(){
+  const bank=BANK[S.mode]; const isKid=S.mode==='kid';
+  // 1) 정서 좌표 — 감정 단어(60%) + 색 선택(40%) 교차 (밝기→쾌, 채도→각성)
+  const em=bank.emotions.filter(e=>S.picks.emotions.includes(e.w));
+  const wv=em.reduce((s,e)=>s+e.v,0)/em.length, wa=em.reduce((s,e)=>s+e.a,0)/em.length;
+  const cs=SENSE.colors.filter(c=>S.picks.colors.includes(c.w));
+  const cv=cs.reduce((s,c)=>s+c.v,0)/cs.length, ca=cs.reduce((s,c)=>s+c.a,0)/cs.length;
+  const v=wv*.6+cv*.4, a=wa*.6+ca*.4;
+  // 2) 결핍 욕구 — 바람 단어 + 머물고 싶은 공간(전망-은신) 가중 합산
+  const cnt={autonomy:0,competence:0,relatedness:0,safety:0};
+  bank.desires.filter(d=>S.picks.desires.includes(d.w)).forEach(d=>cnt[d.n]++);
+  const space=SENSE.spaces.find(s=>s.w===S.picks.space[0]); cnt[space.n]+=1.5;
+  const need=Object.keys(cnt).sort((x,y)=>cnt[y]-cnt[x])[0];
+  // 3) 팔레트 — 색 선택(주) + 장면 단어(보조)
+  const sc=bank.scenes.filter(s=>S.picks.scenes.includes(s.w));
+  const warmVotes=cs.filter(c=>c.t==='warm').length*1.5 + sc.filter(s=>s.p==='warm').length;
+  const coolVotes=cs.filter(c=>c.t==='cool').length*1.5 + sc.filter(s=>s.p==='cool').length;
+  const palette = warmVotes>=coolVotes ? 'warm' : 'cool';
+  // 4) 형태·소리 취향
+  const shape=SENSE.shapes.find(s=>s.w===S.picks.shape[0]);
+  const sound=SENSE.sounds.find(s=>s.w===S.picks.sound[0]);
+  const lively = sound.k==='playful'||sound.k==='sparkle';
+
+  const needKo={autonomy:'자유와 스스로 선택하는 힘(자율성)',competence:'해내는 기쁨과 인정(유능감)',
+    relatedness:'곁에 있어주는 존재와의 연결(관계성)',safety:'안심하고 쉴 수 있는 품(안전감)'}[need];
+  const moodKo = v>=0
+    ? (a>=0?'밝고 활기찬 상태':'평온하고 따뜻한 상태')
+    : (a>=.15?'긴장과 불안이 높은 상태 — 진정이 필요함':'기운이 가라앉고 지친 상태 — 따뜻한 온기가 필요함');
+
+  // 이미지 스타일 판정 (미술치료·정서 연구 응용)
+  let styleEn, styleKo;
+  if(isKid){
+    styleEn='cheerful children\'s picture book illustration, rounded soft shapes, bright saturated colors, friendly and cozy';
+    styleKo='밝고 채도 높은 그림책 일러스트 (동글동글한 형태)';
+  } else if(v<0 && a>=.15){
+    styleEn='soft watercolor illustration, muted pastel palette, gentle diffused light, minimal detail, calm and soothing atmosphere';
+    styleKo='마음을 진정시키는 흐린 파스텔 수채화 (디테일 최소화)';
+  } else if(v<0){
+    styleEn='warm painterly storybook illustration, soft textures, a gradually brightening golden light breaking through, quiet hopeful mood';
+    styleKo='온기가 스며드는 회화풍 — 서서히 밝아지는 금빛';
+  } else {
+    styleEn='richly detailed storybook painting, warm luminous colors, wonder and delight';
+    styleKo='따뜻하고 풍성한 디테일의 동화 삽화';
+  }
+  styleEn += palette==='warm' ? ', warm color palette' : ', deep blue and cool color palette with warm accents';
+  styleEn += ', '+shape.en;                       // 끌린 형태를 화면의 조형 언어로
+  styleEn += lively ? ', lively rhythm and playful sense of movement' : ', quiet serene stillness';
+
+  // 인물 연출 (욕구별 구도)
+  const fig={
+    autonomy:{en:'a lone protagonist small within a vast open landscape, wide horizon, sense of freedom', ko:'광활한 풍경 속 주인공 홀로 — 자유의 구도'},
+    competence:{en:'the protagonist in an ascending composition, reaching upward or standing accomplished, uplifting angle', ko:'위로 오르는 성취의 구도'},
+    relatedness:{en:'the protagonist together with a warm companion, side by side, tender closeness', ko:'곁을 지켜주는 존재와 함께 있는 구도'},
+    safety:{en:'the protagonist wrapped in a cozy sheltering space, soft enclosing light, embraced and protected', ko:'포근하게 감싸이는 안식의 구도'}
+  }[need];
+  styleEn += ', '+fig.en;
+  if(!isKid) styleEn += ', human figures shown from behind or as soft silhouettes';
+  styleEn += ', vertical 2:3 composition, no text, no letters, no watermark';
+
+  const colorKo=cs.map(c=>c.w).join('·')+' 계열('+(palette==='warm'?'따뜻한 쪽':'차분한 쪽')+')';
+  const senseKo=`색은 ${colorKo}, 형태는 ${shape.ko}, 머물고 싶은 자리는 ${space.w}, 소리는 ${sound.ko}`;
+  return {v,a,need,palette,needKo,moodKo,styleKo:styleKo+' · '+fig.ko,styleEn,
+    colorKo,shapeKo:shape.ko,spaceKo:space.w,soundKo:sound.ko,senseKo};
+}
+
+/* ═══════════ 생성 (Claude → gpt-image-1) ═══════════ */
+const LOADMSGS=['마음의 별자리를 읽는 중','이야기의 씨앗을 심는 중','문장들이 길을 찾는 중','그림 물감을 고르는 중','책장을 꿰매는 중'];
+let loadTimer=null;
+async function startCreate(){
+  show('scr-loading'); $('loaderr').style.display='none'; Snd.door();
+  const A=S.analysis;
+  $('loadread').textContent=`읽어낸 마음 — ${A.moodKo}. ${A.senseKo}. 마음이 바라는 것은 ‘${A.needKo}’. 그림은 ${A.styleKo}로 그립니다.`;
+  let mi=0; $('loadmsg').textContent=LOADMSGS[0];
+  clearInterval(loadTimer); loadTimer=setInterval(()=>{ mi=(mi+1)%LOADMSGS.length; $('loadmsg').textContent=LOADMSGS[mi]; },3500);
+  try{
+    const r=await fetch('/api/story',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({mode:S.mode,picks:S.picks,analysis:{moodKo:A.moodKo,needKo:A.needKo,styleKo:A.styleKo,senseKo:A.senseKo}})});
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.error||'오류');
+    S.story=data.story; S.images=[null,null,null,null]; S.page=0;
+    clearInterval(loadTimer); Snd.chime();
+    buildBook(); show('scr-book');
+    fetchAllImages();
+  }catch(e){
+    clearInterval(loadTimer);
+    $('loadmsg').textContent='문이 열리지 않았어요';
+    const eb=$('loaderr'); eb.style.display='block'; eb.innerHTML='';
+    eb.appendChild(document.createTextNode(e.message)); eb.appendChild(document.createElement('br'));
+    const rb=document.createElement('button'); rb.className='btn ghost'; rb.style.marginTop='12px'; rb.textContent='다시 시도';
+    rb.onclick=startCreate; eb.appendChild(rb);
+    const hb=document.createElement('button'); hb.className='btn ghost'; hb.style.margin='12px 0 0 8px'; hb.textContent='처음으로';
+    hb.onclick=()=>location.reload(); eb.appendChild(hb);
+  }
+}
+function imagePrompt(i){ // 0=표지, 1~3=장면
+  const base = i===0 ? S.story.coverImagePrompt : S.story.scenes[i-1].imagePrompt;
+  return base+', '+S.analysis.styleEn;
+}
+async function fetchOne(i){
+  setPh(i,'그림을 그리는 중이에요…',false);
+  try{
+    const r=await fetch('/api/image',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({prompt:imagePrompt(i)})});
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.error||'오류');
+    S.images[i]='data:image/png;base64,'+data.b64;
+    placeImg(i); Snd.ting();
+  }catch(e){ setPh(i,e.message,true); }
+}
+function fetchAllImages(){ [0,1,2,3].forEach(i=>fetchOne(i)); }
+
+/* ═══════════ 동화책 뷰어 ═══════════ */
+const CHAPS=['첫 번째 이야기','두 번째 이야기','마지막 이야기'];
+function art(i){
+  const d=document.createElement('div'); d.className='art'; d.dataset.idx=i;
+  const ph=document.createElement('div'); ph.className='ph';
+  ph.appendChild(document.createElement('span')).textContent='그림을 그리는 중이에요…';
+  d.appendChild(ph); return d;
+}
+function buildBook(){
+  const st=$('stage'); st.innerHTML=''; const dots=$('pgdots'); dots.innerHTML='';
+  const pages=[];
+  // 표지
+  {
+    const p=document.createElement('div'); p.className='page';
+    const sp=document.createElement('div'); sp.className='spread';
+    sp.appendChild(art(0));
+    const t=document.createElement('div'); t.className='txt';
+    const e=document.createElement('div'); e.className='chap'; e.textContent='당신을 위한 동화'; t.appendChild(e);
+    const h=document.createElement('h2'); h.className='cover-t serif'; h.textContent=S.story.title; t.appendChild(h);
+    const s=document.createElement('p'); s.className='cover-s'; s.textContent=S.story.protagonist; t.appendChild(s);
+    sp.appendChild(t); p.appendChild(sp); pages.push(p);
+  }
+  // 장면 3장
+  S.story.scenes.forEach((sc,i)=>{
+    const p=document.createElement('div'); p.className='page';
+    const sp=document.createElement('div'); sp.className='spread';
+    sp.appendChild(art(i+1));
+    const t=document.createElement('div'); t.className='txt';
+    const e=document.createElement('div'); e.className='chap'; e.textContent=CHAPS[i]; t.appendChild(e);
+    const b=document.createElement('div'); b.className='body'; b.textContent=sc.text; t.appendChild(b);
+    sp.appendChild(t); p.appendChild(sp); pages.push(p);
+  });
+  // 마음 처방 페이지
+  {
+    const A=S.analysis;
+    const p=document.createElement('div'); p.className='page closing-page';
+    const sp=document.createElement('div'); sp.className='spread'; sp.style.gridTemplateColumns='1fr'; sp.style.gridTemplateRows='1fr';
+    const t=document.createElement('div'); t.className='txt';
+    const e=document.createElement('div'); e.className='chap'; e.textContent='이야기를 덮으며'; t.appendChild(e);
+    const b=document.createElement('div'); b.className='body serif'; b.style.textAlign='center'; b.textContent=S.story.closing; t.appendChild(b);
+    const rx=document.createElement('div'); rx.className='rx';
+    rx.textContent=`이 동화가 지어진 이유 — 지금 마음은 ${A.moodKo}였어요. 당신이 고른 감각을 보면 ${A.senseKo}였고, 마음이 가장 바라는 것은 ${A.needKo}이었어요. 그래서 이야기 속에서 그 바람이 이루어지도록 했고, 그림은 ${A.styleKo}로 그렸습니다.`;
+    t.appendChild(rx); sp.appendChild(t); p.appendChild(sp); pages.push(p);
+  }
+  pages.forEach((p,i)=>{ st.appendChild(p);
+    const d=document.createElement('i'); d.dataset.i=i; dots.appendChild(d); });
+  S.pageCount=pages.length; goPage(0,true);
+}
+function setPh(i,msg,failed){
+  document.querySelectorAll(`.art[data-idx="${i}"]`).forEach(a=>{
+    a.innerHTML=''; const ph=document.createElement('div'); ph.className='ph';
+    const s=document.createElement('span'); s.textContent=msg; ph.appendChild(s);
+    if(failed){ const rb=document.createElement('button'); rb.className='retry'; rb.textContent='다시 그리기';
+      rb.onclick=()=>fetchOne(i); ph.appendChild(rb); }
+    a.appendChild(ph);
+  });
+}
+function placeImg(i){
+  document.querySelectorAll(`.art[data-idx="${i}"]`).forEach(a=>{
+    a.innerHTML=''; const img=document.createElement('img'); img.src=S.images[i]; img.alt='동화 삽화'; a.appendChild(img);
+  });
+}
+function goPage(n,silent){
+  S.page=Math.max(0,Math.min(S.pageCount-1,n));
+  document.querySelectorAll('#stage .page').forEach((p,i)=>p.classList.toggle('cur',i===S.page));
+  document.querySelectorAll('#pgdots i').forEach((d,i)=>d.classList.toggle('cur',i===S.page));
+  $('prevPg').disabled=S.page===0; $('nextPg').disabled=S.page===S.pageCount-1;
+  if(!silent) Snd.page();
+}
+$('prevPg').onclick=()=>goPage(S.page-1);
+$('nextPg').onclick=()=>goPage(S.page+1);
+addEventListener('keydown',e=>{ if(!$('scr-book').classList.contains('on')) return;
+  if(e.key==='ArrowRight') goPage(S.page+1); if(e.key==='ArrowLeft') goPage(S.page-1); });
+let tx=null;
+$('stage').addEventListener('touchstart',e=>{ tx=e.touches[0].clientX; },{passive:true});
+$('stage').addEventListener('touchend',e=>{ if(tx===null||$('book').classList.contains('scroll')) return;
+  const dx=e.changedTouches[0].clientX-tx; tx=null;
+  if(Math.abs(dx)>50) goPage(S.page+(dx<0?1:-1)); },{passive:true});
+$('viewBtn').onclick=()=>{ const b=$('book'); b.classList.toggle('scroll');
+  const sc=b.classList.contains('scroll'); $('viewBtn').textContent=sc?'▤ 넘겨보기':'≡ 이어보기';
+  if(!sc) goPage(S.page,true); };
+$('homeBtn').onclick=()=>{ if(confirm('처음 화면으로 돌아갈까요? 지금 동화는 저장하지 않으면 사라져요.')) location.reload(); };
+
+/* ═══════════ 다운로드 ═══════════ */
+function dl(name,href){ const a=document.createElement('a'); a.href=href; a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+$('dlTxt').onclick=()=>{
+  if(!S.story) return;
+  const t=[S.story.title,'',S.story.protagonist,''];
+  S.story.scenes.forEach((s,i)=>{ t.push('── '+CHAPS[i]+' ──','',s.text,''); });
+  t.push('── 이야기를 덮으며 ──','',S.story.closing);
+  dl(S.story.title+'.txt','data:text/plain;charset=utf-8,'+encodeURIComponent(t.join('\n')));
+};
+$('dlImg').onclick=()=>{
+  const img=S.images[S.page<4?S.page:3];
+  if(!img){ alert('이 장의 그림이 아직 준비되지 않았어요.'); return; }
+  const names=['표지','장면1','장면2','장면3'];
+  dl(S.story.title+'_'+names[Math.min(S.page,3)]+'.png',img);
+};
+$('dlBook').onclick=()=>{
+  if(!S.story) return;
+  if(S.images.some(x=>!x) && !confirm('아직 준비되지 않은 그림이 있어요. 그림 없이 저장할까요?')) return;
+  const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let pages='';
+  const pg=(img,chap,html)=>`<section class="pg">${img?`<img src="${img}">`:''}<div class="tx">${chap?`<div class="ch">${esc(chap)}</div>`:''}${html}</div></section>`;
+  pages+=pg(S.images[0],'당신을 위한 동화',`<h1>${esc(S.story.title)}</h1><p class="s">${esc(S.story.protagonist)}</p>`);
+  S.story.scenes.forEach((s,i)=>{ pages+=pg(S.images[i+1],CHAPS[i],`<p class="b">${esc(s.text).replace(/\n/g,'<br>')}</p>`); });
+  pages+=pg(null,'이야기를 덮으며',`<p class="b c">${esc(S.story.closing)}</p>`);
+  const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(S.story.title)}</title>
+<style>body{margin:0;background:#efe6d2;font-family:'Gowun Dodum','Apple SD Gothic Neo',sans-serif;color:#3a2f22}
+.pg{max-width:640px;margin:34px auto;background:#f7eeda;border-radius:14px;overflow:hidden;box-shadow:0 10px 34px rgba(60,45,20,.18)}
+.pg img{width:100%;display:block}.tx{padding:30px 34px 40px}
+.ch{font-size:.72rem;letter-spacing:.3em;color:#a3865a;margin-bottom:14px}
+h1{font-size:1.8rem;margin:0 0 10px;line-height:1.5}.s{color:#8a7350}
+.b{line-height:2.05;white-space:pre-wrap;font-size:1.05rem}.c{text-align:center}
+footer{text-align:center;color:#a3865a;font-size:.78rem;padding:20px 0 50px}</style></head>
+<body>${pages}<footer>이야기의 문에서 지어진 동화</footer></body></html>`;
+  dl(S.story.title+'_동화책.html',URL.createObjectURL(new Blob([html],{type:'text/html'})));
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+# 이야기의 문 — 마음을 읽는 치유 동화 웹앱
+
+단어 선택으로 심리를 읽고(정서 원형 모델 + 자기결정이론), Claude가 독서치료 구조의 동화를 짓고, OpenAI gpt-image-2가 삽화(세로 1024×1536, medium)를 그리는 앱입니다.
+
+## 폴더 구성
+```
+index.html      ← 앱 본체 (심리 엔진·사운드·뷰어·다운로드 전부 포함)
+api/story.js    ← Claude API 호출 (동화 생성, IP당 하루 3편 제한)
+api/image.js    ← OpenAI 이미지 API 호출 (IP당 하루 25장 제한)
+vercel.json     ← 함수 타임아웃 60초 설정
+```
+
+## 1. OpenAI API 키 발급 (처음이라면)
+
+1. https://platform.openai.com 접속 → 회원가입/로그인 (ChatGPT 계정과 같아도 됨. 단, ChatGPT Plus 구독과 API 요금은 **별개**입니다)
+2. 좌측(또는 우상단 톱니) **Billing** → **Add payment method**로 카드 등록 후 크레딧 충전 (최소 $5부터 가능, 선불 방식이라 충전한 만큼만 쓰입니다)
+3. **API keys** 메뉴 → **Create new secret key** → 생성된 `sk-...` 키를 복사해 보관 (다시 볼 수 없으니 메모)
+4. **중요:** gpt-image-2 모델은 **조직 인증(Organization Verification)**이 필요할 수 있습니다.
+   - Settings → Organization → General → **Verify Organization** 에서 신분증 인증 진행
+   - 인증 없이 이미지 API 호출 시 "must be verified" 오류가 나면 이 절차를 하면 됩니다
+
+## 2. Anthropic API 키
+
+- https://console.anthropic.com → API Keys → 키 발급 (命鏡 때 쓰던 키가 있으면 그대로 사용 가능)
+
+## 3. Vercel 배포 (saju2와 동일한 방식)
+
+1. GitHub(aceleekr-lang)에 새 저장소 생성 → 이 폴더 파일 전부 업로드
+2. Vercel → Add New Project → 해당 저장소 Import
+3. **Settings → Environment Variables**에 두 개 등록:
+   - `ANTHROPIC_API_KEY` = Anthropic 키
+   - `OPENAI_API_KEY` = OpenAI 키 (sk-...)
+4. Deploy — 이후 GitHub에 파일을 올리면 자동 재배포
+
+## 3-1. 카카오톡 공유 썸네일 설정 (배포 직후 한 번)
+
+1. 배포가 끝나 주소가 정해지면 `index.html`의 `og:image` 줄에서 `REPLACE-WITH-YOUR-DOMAIN.vercel.app`을 실제 주소로 교체 후 재배포
+2. 카카오는 미리보기를 캐시하므로, 처음 빈 칸으로 보이면 https://developers.kakao.com/tool/debugger/sharing 에서 주소를 넣고 "초기화" (命·몸 때 빈 썸네일 문제의 해결 방법)
+
+## 4. 비용 (1편 기준)
+
+- 삽화 4장(gpt-image-2 medium 1024×1536): 약 $0.25~0.28
+- 동화 텍스트(Claude Sonnet 1회): 약 $0.05~0.10
+- **1편당 약 400~550원.** 기본 제한: 이야기 IP당 하루 3편(약 1,500원 상한). 변경하려면 `api/story.js` 맨 위 `DAILY_LIMIT` 숫자만 수정
+- 참고: 서버리스 특성상 이 제한은 간이 방식입니다. 엄격한 제한이 필요해지면(홍보 후 트래픽 증가 등) Upstash Redis 연동으로 바꿔야 하니 그때 말씀 주세요
+
+## 5. 사용 흐름
+
+문 두드리기(소리 잠금 해제) → 아이의 문/어른의 문 선택 → 단어 카드 3라운드(감정→바람→장면, 각 3개) → 심리 판정 → 동화 4페이지(표지+3장면)+마음 처방 페이지 → 글(.txt)/그림(.png)/동화책(.html 한 파일) 저장
+
+## 심리 판정 로직 (수정하고 싶을 때)
+
+- 단어 목록과 좌표: `index.html`의 `BANK` (감정 v=쾌·불쾌, a=각성 / 바람 n=욕구 유형)
+- 판정→그림 스타일 매핑: `analyze()` 함수
+- 동화 생성 지침(독서치료 3단계 등): `api/story.js`의 `system` 프롬프트
