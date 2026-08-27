@@ -17,10 +17,11 @@ function limited(ip) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const ip = (req.headers['x-forwarded-for'] || 'unknown').split(',')[0].trim();
-  if (limited(ip)) return res.status(429).json({ error: '오늘 그릴 수 있는 그림을 모두 그렸어요.' });
 
-  const { prompt } = req.body || {};
+  const { prompt, master } = req.body || {};
   if (!prompt) return res.status(400).json({ error: '프롬프트가 없습니다.' });
+  const isOwner = !!process.env.OWNER_KEY && master === process.env.OWNER_KEY;
+  if (!isOwner && limited(ip)) return res.status(429).json({ error: '오늘 그릴 수 있는 그림을 모두 그렸어요.' });
 
   try {
     const r = await fetch('https://api.openai.com/v1/images/generations', {

@@ -1,27 +1,21 @@
 // /api/story — Claude API로 치유 동화 생성 (키는 Vercel 환경변수 ANTHROPIC_API_KEY)
-const DAILY_LIMIT = 3; // 편/일/IP (필요시 숫자만 바꾸세요)
-const hits = new Map(); // 인스턴스 메모리 기반 간이 제한
-
-function kstDate() {
-  return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
-}
-function limited(ip) {
-  const today = kstDate();
-  const rec = hits.get(ip);
-  if (!rec || rec.date !== today) { hits.set(ip, { date: today, count: 1 }); return false; }
-  if (rec.count >= DAILY_LIMIT) return true;
-  rec.count += 1; return false;
-}
+// 잠금: 운영자(OWNER_KEY 일치)는 무제한, 그 외에는 평생 2편 (쿠키 + IP 메모리 기반 간이 잠금)
+const LIFETIME_LIMIT = 2;
+const ipLife = new Map(); // 배포/휴면 시 초기화되는 보조 장치 — 주 잠금은 쿠키
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const ip = (req.headers['x-forwarded-for'] || 'unknown').split(',')[0].trim();
-  if (limited(ip)) {
-    return res.status(429).json({ error: '오늘의 이야기 문은 모두 닫혔어요. 내일 다시 열려요. (하루 ' + DAILY_LIMIT + '편)' });
-  }
 
-  const { mode, picks, analysis } = req.body || {};
+  const { mode, picks, analysis, master } = req.body || {};
   if (!mode || !picks || !analysis) return res.status(400).json({ error: '잘못된 요청입니다.' });
+
+  const isOwner = !!process.env.OWNER_KEY && master === process.env.OWNER_KEY;
+  const ck = (req.headers.cookie || '').match(/(?:^|; )sdlc=(\d+)/);
+  const used = Math.max(ck ? parseInt(ck[1]) : 0, ipLife.get(ip) || 0);
+  if (!isOwner && used >= LIFETIME_LIMIT) {
+    return res.status(429).json({ error: '이야기의 문은 한 사람에게 평생 두 번 열립니다. 당신의 두 이야기는 이미 지어졌어요.' });
+  }
 
   const isKid = mode === 'kid';
   const sentence = isKid ? '각 장은 4~6문장, 짧고 리듬감 있는 쉬운 문장' : '각 장은 7~10문장, 문학적이고 은유가 살아있는 문장';
@@ -78,6 +72,10 @@ export default async function handler(req, res) {
     const text = (data.content || []).map(b => b.text || '').join('');
     const clean = text.replace(/```json|```/g, '').trim();
     const story = JSON.parse(clean.slice(clean.indexOf('{'), clean.lastIndexOf('}') + 1));
+    if (!isOwner) {
+      ipLife.set(ip, used + 1);
+      res.setHeader('Set-Cookie', 'sdlc=' + (used + 1) + '; Max-Age=315360000; Path=/; SameSite=Lax');
+    }
     return res.status(200).json({ story });
   } catch (e) {
     console.error(e);
