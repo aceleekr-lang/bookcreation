@@ -436,6 +436,18 @@ const ROUNDS=[
 ];
 
 /* ═══════════ 상태 & 화면 전환 ═══════════ */
+/* ═══════════ 평생 2회 잠금 (운영자는 무제한) ═══════════ */
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},
+             set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+(function(){ try{ const m=new URLSearchParams(location.search).get('master'); if(m) store.set('sd_master',m); }catch(e){} })();
+const MASTER=store.get('sd_master')||'';
+function lifeCount(){ const a=parseInt(store.get('sd_life')||'0')||0;
+  let b=0; try{ const c=(document.cookie.match(/(?:^|; )sdlc=(\d+)/)||[])[1]; b=parseInt(c||'0')||0; }catch(e){}
+  return Math.max(a,b); }
+function lifeUp(){ const n=lifeCount()+1; store.set('sd_life',String(n));
+  try{ document.cookie='sdlc='+n+'; max-age=315360000; path=/; SameSite=Lax'; }catch(e){} }
+function lifeLocked(){ return !MASTER && lifeCount()>=2; }
+
 const EMPTY_PICKS=()=>({colors:[],shape:[],space:[],sound:[],emotions:[],desires:[],scenes:[]});
 const S={mode:null, round:0, picks:EMPTY_PICKS(), story:null, images:[null,null,null,null], analysis:null, page:0};
 const $=id=>document.getElementById(id);
@@ -446,6 +458,7 @@ function doorWipe(cb){ const w=$('doorwipe'); w.classList.add('go'); w.classList
 
 $('enterBtn').onclick=()=>{ Snd.boot(); if(!Snd.muted) Snd.ambient(true); Snd.ting(); show('scr-mode'); };
 document.querySelectorAll('.mode-card').forEach(b=>b.onclick=()=>{
+  if(lifeLocked()){ alert('이야기의 문은 한 사람에게 평생 두 번 열립니다.\n당신의 두 이야기는 이미 지어졌어요. 오래 간직해 주세요.'); return; }
   S.mode=b.dataset.mode; document.body.classList.toggle('kid',S.mode==='kid');
   S.round=0; S.picks=EMPTY_PICKS();
   doorWipe(()=>{ renderRound(); show('scr-cards'); });
@@ -580,10 +593,11 @@ async function startCreate(){
   setProg(0,'이야기를 짓기 시작했어요');
   try{
     const r=await fetch('/api/story',{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({mode:S.mode,picks:S.picks,analysis:{moodKo:A.moodKo,needKo:A.needKo,styleKo:A.styleKo,senseKo:A.senseKo}})});
+      body:JSON.stringify({mode:S.mode,picks:S.picks,master:MASTER,analysis:{moodKo:A.moodKo,needKo:A.needKo,styleKo:A.styleKo,senseKo:A.senseKo}})});
     const data=await r.json();
     if(!r.ok) throw new Error(data.error||'오류');
     S.story=data.story; S.images=[null,null,null,null]; S.page=0;
+    if(!MASTER) lifeUp();
     buildBook();
     msgPool=IMGMSGS; setProg(2,'이야기 완성! 이제 그림을 그려요 (2~3분 걸릴 수 있어요)');
     await Promise.all([0,1,2,3].map(i=>fetchOneAuto(i)));
@@ -609,7 +623,7 @@ function imagePrompt(i){ // 0=표지, 1~3=장면
 }
 async function fetchOnce(i){
   const r=await fetch('/api/image',{method:'POST',headers:{'content-type':'application/json'},
-    body:JSON.stringify({prompt:imagePrompt(i)})});
+    body:JSON.stringify({prompt:imagePrompt(i),master:MASTER})});
   const data=await r.json();
   if(!r.ok) throw new Error(data.error||'오류');
   S.images[i]='data:image/png;base64,'+data.b64; // 원본 화질 그대로 보관 (인쇄용)
