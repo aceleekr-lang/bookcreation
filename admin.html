@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이야기의 문 · 관리자</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Gowun Dodum',sans-serif;background:radial-gradient(120% 90% at 50% 110%, #232f57 0%, #141b38 45%, #0b1029 100%);color:#f7eeda;min-height:100vh;padding:24px 16px 60px}
+.wrap{max-width:1080px;margin:0 auto}
+h1{font-family:'Gowun Batang',serif;font-size:1.5rem;letter-spacing:.08em;margin-bottom:4px}
+.sub{font-size:.85rem;opacity:.7;margin-bottom:22px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+input,select,button{font:inherit;color:#f7eeda;background:rgba(255,255,255,.07);border:1px solid rgba(247,238,218,.28);border-radius:10px;padding:10px 14px}
+input::placeholder{color:rgba(247,238,218,.4)}
+input:focus,select:focus{outline:none;border-color:#f0c36b}
+select option{color:#222}
+button{cursor:pointer}
+button:hover{border-color:#f0c36b}
+button.gold{background:linear-gradient(135deg,#f8dfa8,#f0c36b);color:#231a08;border:none;font-weight:700}
+button.danger{color:#f3a08c;border-color:rgba(243,160,140,.5)}
+#search{flex:1;min-width:180px}
+table{width:100%;border-collapse:collapse;background:rgba(255,255,255,.04);border-radius:12px;overflow:hidden;font-size:.88rem}
+th,td{padding:11px 12px;text-align:left;border-bottom:1px solid rgba(247,238,218,.1)}
+th{background:rgba(255,255,255,.06);font-weight:400;color:#f8dfa8;cursor:pointer;user-select:none;white-space:nowrap}
+th .arr{font-size:.7rem;opacity:.8}
+tr:hover td{background:rgba(255,255,255,.03)}
+td .mini{font:inherit;font-size:.78rem;padding:6px 10px;margin-right:4px}
+.empty{padding:40px;text-align:center;opacity:.6}
+#detail{display:none;margin-top:22px;background:#f7eeda;color:#3a2f22;border-radius:14px;padding:26px;box-shadow:0 16px 44px rgba(0,0,0,.4)}
+#detail h2{font-family:'Gowun Batang',serif;margin-bottom:4px}
+#detail .meta{font-size:.82rem;color:#8a7350;margin-bottom:14px}
+#detail .imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:14px 0}
+#detail .imgs img{width:100%;border-radius:8px;display:block}
+#detail .story{white-space:pre-wrap;line-height:1.95;font-size:.95rem;font-family:'Gowun Batang',serif;margin-top:8px}
+#detail .btns{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+#detail .btns button{background:#efe3c8;border-color:#c9b184;color:#5a4a28}
+#gate{max-width:420px;margin:80px auto;text-align:center}
+#gate input{width:100%;text-align:center;margin:16px 0 12px}
+.note{font-size:.78rem;opacity:.6;line-height:1.7;margin-top:10px}
+#stat{font-size:.82rem;opacity:.75;margin:6px 0 12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- 열쇠 게이트 -->
+  <div id="gate">
+    <h1>이야기의 문 · 관리자</h1>
+    <p class="sub">운영자 열쇠(OWNER_KEY)를 입력하세요</p>
+    <input id="keyIn" type="password" placeholder="운영자 열쇠">
+    <button class="gold" id="keyBtn" style="width:100%">들어가기</button>
+    <p class="note">열쇠는 이 브라우저에만 저장됩니다.</p>
+  </div>
+
+  <!-- 본 화면 -->
+  <div id="main" style="display:none">
+    <h1>이야기의 문 · 보관함</h1>
+    <p class="sub">수강생들이 만든 동화가 여기 쌓입니다. 행을 누르면 내용을 볼 수 있어요.</p>
+    <div class="bar">
+      <input id="search" placeholder="이름·연락처·제목 검색">
+      <select id="sortSel">
+        <option value="ts_desc">최신순</option>
+        <option value="ts_asc">오래된순</option>
+        <option value="name">이름순</option>
+        <option value="title">제목순</option>
+        <option value="mode">모드순</option>
+      </select>
+      <button id="csvBtn">목록 CSV</button>
+      <button id="reloadBtn">새로고침</button>
+      <button id="logoutBtn">열쇠 잠금</button>
+    </div>
+    <p id="stat"></p>
+    <table>
+      <thead><tr>
+        <th data-k="ts">시간 <span class="arr"></span></th>
+        <th data-k="name">이름 <span class="arr"></span></th>
+        <th data-k="contact">연락처</th>
+        <th data-k="mode">모드</th>
+        <th data-k="title">제목 <span class="arr"></span></th>
+        <th></th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">아직 저장된 동화가 없어요.</div>
+
+    <div id="detail"></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let KEY=localStorage.getItem('sd_admin_key')||'';
+let ITEMS=[], SORT='ts_desc', CUR=null;
+
+async function api(action,id){
+  const r=await fetch('/api/admin',{method:'POST',headers:{'content-type':'application/json'},
+    body:JSON.stringify({key:KEY,action,id})});
+  const d=await r.json();
+  if(!r.ok) throw new Error(d.error||'오류');
+  return d;
+}
+function fmt(ts){ return new Date(ts).toLocaleString('ko-KR',{dateStyle:'short',timeStyle:'short'}); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function enter(){
+  try{ await api('list'); }catch(e){
+    if(/열쇠/.test(e.message)){ alert(e.message); return false; }
+    // 저장소 미연결 등은 통과 후 표시
+  }
+  localStorage.setItem('sd_admin_key',KEY);
+  $('gate').style.display='none'; $('main').style.display='block';
+  load(); return true;
+}
+$('keyBtn').onclick=()=>{ KEY=$('keyIn').value.trim(); if(KEY) enter(); };
+$('keyIn').addEventListener('keydown',e=>{ if(e.key==='Enter') $('keyBtn').click(); });
+$('logoutBtn').onclick=()=>{ localStorage.removeItem('sd_admin_key'); location.reload(); };
+
+async function load(){
+  $('rows').innerHTML=''; $('stat').textContent='불러오는 중…';
+  try{
+    const d=await api('list'); ITEMS=d.items||[];
+    $('stat').textContent='총 '+ITEMS.length+'편';
+    render();
+  }catch(e){ $('stat').textContent='⚠ '+e.message; }
+}
+function sorted(list){
+  const l=[...list];
+  if(SORT==='ts_desc') l.sort((a,b)=>b.ts-a.ts);
+  if(SORT==='ts_asc') l.sort((a,b)=>a.ts-b.ts);
+  if(SORT==='name') l.sort((a,b)=>String(a.name).localeCompare(b.name,'ko'));
+  if(SORT==='title') l.sort((a,b)=>String(a.title).localeCompare(b.title,'ko'));
+  if(SORT==='mode') l.sort((a,b)=>String(a.mode).localeCompare(b.mode,'ko'));
+  return l;
+}
+function render(){
+  const q=$('search').value.trim().toLowerCase();
+  const list=sorted(ITEMS).filter(it=>!q||[it.name,it.contact,it.title].some(v=>String(v||'').toLowerCase().includes(q)));
+  const tb=$('rows'); tb.innerHTML='';
+  $('empty').style.display=list.length?'none':'block';
+  list.forEach(it=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+fmt(it.ts)+'</td><td>'+esc(it.name)+'</td><td>'+esc(it.contact)+'</td><td>'+esc(it.mode)+'</td><td>'+esc(it.title)+'</td>'
+      +'<td><button class="mini" data-a="view">보기</button><button class="mini danger" data-a="del">삭제</button></td>';
+    tr.querySelector('[data-a=view]').onclick=()=>view(it.id);
+    tr.querySelector('[data-a=del]').onclick=()=>del(it.id,it.name,it.title);
+    tb.appendChild(tr);
+  });
+}
+$('search').oninput=render;
+$('sortSel').onchange=e=>{ SORT=e.target.value; render(); };
+document.querySelectorAll('th[data-k]').forEach(th=>th.onclick=()=>{
+  const k=th.dataset.k;
+  SORT = (k==='ts') ? (SORT==='ts_desc'?'ts_asc':'ts_desc') : k;
+  $('sortSel').value = ['ts_desc','ts_asc','name','title','mode'].includes(SORT)?SORT:'ts_desc';
+  render();
+});
+$('reloadBtn').onclick=load;
+
+async function del(id,name,title){
+  if(!confirm((name||'무명')+' 님의 「'+(title||'')+'」 기록을 삭제할까요? 되돌릴 수 없어요.')) return;
+  try{ await api('delete',id); ITEMS=ITEMS.filter(x=>x.id!==id); if(CUR===id){$('detail').style.display='none';CUR=null;} render(); $('stat').textContent='총 '+ITEMS.length+'편'; }
+  catch(e){ alert(e.message); }
+}
+
+async function loadImg(id,slot){
+  let s='',off=0;
+  while(true){
+    const r=await fetch('/api/imgpart',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({recId:id,slot,offset:off})});
+    const d=await r.json(); if(!r.ok) return null;
+    s+=d.part; off+=d.part.length;
+    if(d.done) break;
+  }
+  if(!s) return null;
+  const p=s.indexOf('|'); return 'data:'+s.slice(0,p)+';base64,'+s.slice(p+1);
+}
+async function view(id){
+  CUR=id; const box=$('detail'); box.style.display='block';
+  box.innerHTML='<p>불러오는 중… (원본 그림이라 몇 초 걸릴 수 있어요)</p>'; box.scrollIntoView({behavior:'smooth'});
+  try{
+    const d=await api('get',id); const rec=d.rec;
+    const imgs=[]; for(let s=0;s<4;s++) imgs.push(await loadImg(id,s));
+    const A=rec.analysis||{};
+    const CH=['첫 번째 이야기','두 번째 이야기','마지막 이야기'];
+    let story='';
+    (rec.story.scenes||[]).forEach((s,i)=>{ story+='── '+CH[i]+' ──\n'+s.text+'\n\n'; });
+    story+='── 이야기를 덮으며 ──\n'+(rec.story.closing||'');
+    box.innerHTML='<h2>'+esc(rec.title)+'</h2>'
+      +'<div class="meta">'+esc(rec.name)+' · '+esc(rec.contact)+' · '+esc(rec.mode)+' 모드 · '+fmt(rec.ts)
+      +(A.moodKo?('<br>'+esc(A.moodKo)+' / '+esc(A.needKo||'')+' / '+esc(A.styleKo||'')):'')+'</div>'
+      +'<div class="imgs">'+imgs.map(x=>x?('<img src="'+x+'">'):'').join('')+'</div>'
+      +'<div class="story">'+esc(rec.story.protagonist||'')+'\n\n'+esc(story)+'</div>'
+      +'<div class="btns"><button id="dlHtml">동화책 HTML 저장</button><button id="dlTxt2">글 TXT 저장</button><button class="danger" id="delBtn">이 기록 삭제</button></div>';
+    $('dlHtml').onclick=()=>downloadBook(rec,imgs);
+    $('dlTxt2').onclick=()=>{ const a=document.createElement('a');
+      a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(rec.title+'\n'+rec.name+' ('+rec.contact+')\n\n'+story);
+      a.download=rec.name+'_'+rec.title+'.txt'; a.click(); };
+    $('delBtn').onclick=()=>del(id,rec.name,rec.title);
+  }catch(e){ box.innerHTML='<p>⚠ '+esc(e.message)+'</p>'; }
+}
+
+function downloadBook(rec,imgs){
+  const esc2=esc; const CH=['첫 번째 이야기','두 번째 이야기','마지막 이야기']; const A=rec.analysis||{};
+  const pg=(img,chap,inner,cls)=>'<section class="pg '+(cls||'')+'">'+(img?'<div class="im"><img src="'+img+'"></div>':'')+'<div class="tx">'+(chap?'<div class="ch">'+esc2(chap)+'</div>':'')+inner+'</div></section>';
+  let pages='';
+  pages+=pg(imgs[0],(rec.name?rec.name+'님':'당신')+'을 위한 동화','<h1>'+esc2(rec.title)+'</h1><p class="s">'+esc2(rec.story.protagonist||'')+'</p>');
+  (rec.story.scenes||[]).forEach((s,i)=>{ pages+=pg(imgs[i+1],CH[i],'<p class="b">'+esc2(s.text).replace(/\n/g,'<br>')+'</p>'); });
+  pages+=pg(null,'이야기를 덮으며','<p class="b c">'+esc2(rec.story.closing||'')+'</p>'+(A.moodKo?'<p class="rx">'+esc2('지어진 이유 — '+A.moodKo+' / '+(A.needKo||'')+' / '+(A.styleKo||''))+'</p>':''),'noimg');
+  const html='<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc2(rec.title)+'</title><style>'
+    +'*{box-sizing:border-box}body{margin:0;background:#efe6d2;font-family:sans-serif;color:#3a2f22}'
+    +'.ui{position:sticky;top:0;display:flex;gap:8px;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(239,230,210,.95);border-bottom:1px solid #d8c9a8}'
+    +'.ui button{font:inherit;font-size:.8rem;padding:7px 12px;border-radius:99px;border:1px solid #c9b184;background:#f7eeda;cursor:pointer}'
+    +'.pg{max-width:680px;margin:26px auto;background:#f7eeda;border-radius:14px;overflow:hidden;box-shadow:0 10px 34px rgba(60,45,20,.18)}'
+    +'.pg .im img{width:100%;display:block}.tx{padding:28px 32px 38px}.ch{font-size:.72rem;letter-spacing:.3em;color:#a3865a;margin-bottom:12px}'
+    +'h1{font-size:1.8rem;margin:0 0 10px;line-height:1.5}.s{color:#8a7350;margin:0}.b{line-height:2.05;white-space:pre-wrap;font-size:1.05rem;margin:0}.c{text-align:center}'
+    +'.rx{margin-top:18px;padding:14px 16px;border:1px dashed #c9b184;border-radius:12px;font-size:.85rem;line-height:1.8;color:#6b5a35}'
+    +'@media print{.ui{display:none}body{background:#fff}.pg{max-width:100%;margin:0;border-radius:0;box-shadow:none;page-break-after:always}}'
+    +'</style></head><body><header class="ui"><b>'+esc2(rec.title)+'</b><button onclick="window.print()">인쇄</button></header>'
+    +pages+'<\/body><\/html>';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  a.download=(rec.name||'무명')+'_'+rec.title+'_동화책.html'; a.click();
+}
+
+$('csvBtn').onclick=()=>{
+  const rows=[['시간','이름','연락처','모드','제목'],
+    ...sorted(ITEMS).map(it=>[fmt(it.ts),it.name,it.contact,it.mode,it.title])];
+  const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='이야기의문_목록.csv'; a.click();
+};
+
+if(KEY){ $('keyIn').value=KEY; enter(); }
+</script>
+</body>
+</html>

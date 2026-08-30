@@ -67,6 +67,13 @@ h1,h2,.serif{font-family:'Gowun Batang',serif}
 .pickcard .orbimg{width:70px;height:70px;border-radius:50%;object-fit:cover;filter:drop-shadow(0 0 10px rgba(240,195,107,.3))}
 .pickcard.picked .cardimg,.pickcard.picked .orbimg{box-shadow:0 0 20px rgba(240,195,107,.55)}
 .hint{font-size:.9rem;opacity:.7;animation:breath 2.8s ease-in-out infinite}
+.fields{display:flex;flex-direction:column;gap:12px;margin:26px 0 22px;width:min(88vw,380px)}
+.tin{font:inherit;font-size:1.05rem;padding:14px 18px;border-radius:14px;text-align:center;
+  border:1px solid rgba(247,238,218,.3);background:rgba(255,255,255,.06);color:var(--paper)}
+.tin:focus{outline:none;border-color:var(--candle);box-shadow:0 0 14px rgba(240,195,107,.25)}
+.tin::placeholder{color:rgba(247,238,218,.45)}
+.agree{font-size:.82rem;opacity:.85;display:flex;gap:9px;align-items:flex-start;text-align:left;line-height:1.6;cursor:pointer}
+.agree input{margin-top:3px;accent-color:var(--candle);width:16px;height:16px;flex:none}
 h1.title{font-size:clamp(1.9rem,6vw,3rem);font-weight:700;letter-spacing:.12em;
   text-shadow:0 0 30px rgba(240,195,107,.35)}
 .sub{margin-top:10px;font-size:clamp(.9rem,2.6vw,1.05rem);opacity:.8;line-height:1.7}
@@ -114,6 +121,7 @@ body.kid .wcard{font-size:clamp(1.05rem,3.6vw,1.2rem);padding:15px 24px}
 .wcard:nth-child(3n){animation-delay:-1.7s}.wcard:nth-child(3n+1){animation-delay:-3.2s}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 .wcard:hover{border-color:var(--line)}
+.wcard.addw{border-style:dashed;opacity:.85;animation:none}
 .wcard.picked{background:linear-gradient(135deg,rgba(240,195,107,.22),rgba(221,143,126,.18));
   border-color:var(--candle);color:#fff;box-shadow:0 0 20px rgba(240,195,107,.35);animation:none;transform:scale(1.05)}
 .sense{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:620px;margin:26px auto 20px}
@@ -202,7 +210,16 @@ body.kid .txt .body{font-size:clamp(1.08rem,2vw,1.25rem);line-height:2.15}
 @media (max-width:760px), (orientation:portrait){
   .spread{grid-template-columns:1fr;grid-template-rows:minmax(0,1.15fr) minmax(0,1fr)}
   .txt{justify-content:flex-start}
-  .txt .body{line-height:1.95}
+  .txt .body{font-size:1.14rem;line-height:2.0}
+  body.kid .txt .body{font-size:1.26rem}
+  .txt h2.cover-t{font-size:2rem}
+  .round-q{font-size:1.42rem}
+  .round-note{font-size:.95rem}
+  .wcard{font-size:1.08rem;padding:14px 22px}
+  body.kid .wcard{font-size:1.18rem;padding:16px 24px}
+  .pickcard .lbl{font-size:.88rem}
+  .btn{font-size:1.12rem;padding:16px 46px}
+  .srclist{font-size:.9rem}
 }
 #sndbtn{position:fixed;top:max(12px,env(safe-area-inset-top));right:14px;z-index:60;width:42px;height:42px;border-radius:50%;
   cursor:pointer;font-size:1.05rem;background:rgba(10,15,36,.55);border:1px solid rgba(247,238,218,.3);color:var(--paper)}
@@ -234,6 +251,18 @@ body.kid .txt .body{font-size:clamp(1.08rem,2vw,1.25rem);line-height:2.15}
     <button class="mode-card" data-mode="adult"><img class="doorimg" src="assets/door-adult.webp" alt="어른의 문">
       <h2 class="serif">어른의 문</h2><p>마음 깊은 곳을 어루만지는<br>은유의 동화</p></button>
   </div>
+</section>
+
+<!-- 2.5 문패 -->
+<section class="screen" id="scr-info">
+  <p class="eyebrow">문패를 걸어주세요</p>
+  <h2 class="round-q serif">이야기의 문에는<br>이름이 새겨진 문패가 필요해요</h2>
+  <div class="fields">
+    <input id="uName" class="tin" maxlength="20" placeholder="이름 (필수)">
+    <input id="uContact" class="tin" maxlength="40" placeholder="네이버 아이디 또는 전화번호 (필수)">
+    <label class="agree"><input type="checkbox" id="uAgree"> 입력한 이름·연락처와 완성된 동화(글)가 운영자에게 전달되어 보관되는 것에 동의합니다.</label>
+  </div>
+  <button class="btn" id="infoBtn">문패 걸고 들어가기</button>
 </section>
 
 <!-- 3. 카드 라운드 -->
@@ -340,6 +369,12 @@ seed(); addEventListener('resize',seed);
 /* ═══════════ 감각 선택 데이터 ═══════════
    색: 명도→쾌·불쾌, 채도→각성 (색채-정서 연구) / 형태: 곡선 선호·각형=긴장 (Bar & Neta, 부바-키키)
    공간: 전망-은신 이론(Appleton) — 은신처=안전, 전망=자율 / 소리: 템포·음역 선호→각성 수준 */
+const ABS_DEF={
+ real:{en:'realistic painterly rendering, natural light and true-to-life proportions',ko:'실제처럼 생생한 묘사'},
+ story:{en:'charming stylized storybook illustration with simplified friendly shapes',ko:'동화책 같은 묘사'},
+ dream:{en:'semi-abstract dreamlike imagery, forms softly dissolving into glowing atmosphere, symbolic rather than literal',ko:'꿈결 같은 반추상'},
+ abs:{en:'fully abstract expressive composition conveying emotion purely through color fields, shapes and movement, no literal depiction of objects or figures',ko:'색과 형태의 추상'}
+};
 const SENSE={
 colors:[
  {w:'노랑',c:'#FFD34D',v:.7,a:.5,t:'warm'},{w:'주황',c:'#FF9950',v:.6,a:.6,t:'warm'},
@@ -374,6 +409,36 @@ spaces:[
   svg:'<path d="M27 55 q11 -12 -2 -22 q-9 -9 7 -19"/><circle cx="13" cy="19" r="7"/><circle cx="48" cy="15" r="8"/><circle cx="51" cy="35" r="6"/>'},
  {w:'비 오는 날 창가 안쪽',img:'assets/space-window.webp',n:'safety',en:'inside by a rainy window, warm and dry',
   svg:'<rect x="15" y="9" width="34" height="45" rx="3"/><path d="M32 9 V54 M15 31 H49"/><path d="M22 16 l-3 7 M41 20 l-3 7"/>'}],
+styles:[
+ {w:'그날의 마음이 고르게 둘래',k:'auto',ko:'마음 맞춤 화풍',en:'',
+  svg:'<path d="M32 10 35 27 52 30 35 33 32 50 29 33 12 30 29 27 Z"/><circle cx="47" cy="15" r="2.5"/><circle cx="15" cy="45" r="2"/>'},
+ {w:'물 번진 자국이 아직 젖어 보이는 그림',k:'wc',ko:'수채화',en:'soft watercolor illustration, gentle wet-on-wet blends, visible paper texture, delicate color bleeding',
+  svg:'<path d="M20 44 q-6 -14 12 -30 q18 16 12 30 a12 9 0 0 1 -24 0"/>'},
+ {w:'색종이를 찢어 붙인 자국이 남은 그림',k:'col',ko:'종이 콜라주',en:'bold paper cut-out collage, layered torn paper textures, crisp overlapping shapes, strong contrast',
+  svg:'<path d="M12 20 34 14 30 34 10 36 Z"/><path d="M30 26 52 22 50 46 28 48 Z"/>'},
+ {w:'칼로 새긴 선이 힘있는 그림',k:'lino',ko:'판화',en:'linocut block-print style, strong carved lines, limited bold palette, handmade print texture',
+  svg:'<rect x="12" y="12" width="40" height="40" rx="4"/><path d="M18 22 h28 M18 30 h28 M18 38 h20"/>'},
+ {w:'먹이 번지고 여백이 숨 쉬는 그림',k:'ink',ko:'수묵 담채화',en:'expressive East Asian ink-wash painting with light color tints, calligraphic brush strokes, generous empty space',
+  svg:'<path d="M14 46 q14 -30 24 -32 q-2 12 12 14 q-20 6 -36 18" fill="currentColor" stroke="none"/>'},
+ {w:'꿈속에서 본 것만 같은 그림',k:'drm',ko:'몽환적 파스텔화',en:'dreamlike soft-pastel surrealism, swirling glowing forms, hazy luminous edges',
+  svg:'<path d="M16 40 q8 -20 20 -14 t14 -6"/><circle cx="24" cy="22" r="3"/><circle cx="44" cy="42" r="4"/>'},
+ {w:'반듯한 도형으로 정리된 그림',k:'flat',ko:'기하학 플랫 일러스트',en:'flat geometric mid-century style illustration, clean simple shapes, subtle screen-print grain',
+  svg:'<circle cx="24" cy="26" r="11"/><rect x="32" y="32" width="18" height="18" rx="2"/><path d="M14 50 26 38"/>'},
+ {w:'금방이라도 말을 걸어올 것 같은 그림',k:'comic',ko:'만화·웹툰풍',en:'clean comic webtoon style illustration, confident line art, cel shading, expressive charming characters, dynamic composition',
+  svg:'<path d="M12 14 h40 v26 h-24 l-8 8 v-8 h-8 Z"/><path d="M22 24 h20 M22 31 h12"/>'},
+ {w:'요즘 감각의 세련된 그림',k:'mod',ko:'모던 일러스트',en:'contemporary editorial digital illustration, trendy muted colors with subtle grain texture, stylish minimal confident shapes',
+  svg:'<circle cx="26" cy="28" r="13"/><path d="M40 46 q8 -8 12 -20"/><circle cx="46" cy="18" r="3"/>'},
+ {w:'화보에서 걸어 나온 듯 멋쟁이가 있는 그림',k:'fash',ko:'패션 화보풍',en:'high-fashion editorial illustration, elegant elongated figures, dramatic graceful poses, sophisticated couture styling and confident brushwork',
+  svg:'<circle cx="32" cy="13" r="4"/><path d="M32 17 q-8 12 -4 20 l-4 16 M32 17 q8 12 4 20 l5 16 M28 30 h9"/>'}],
+details:[
+ {w:'텅 비어 넓은 방',k:'sparse',ko:'여백이 넉넉한 그림',en:'minimalist composition, generous negative space, only a few essential elements',
+  svg:'<rect x="10" y="16" width="44" height="34" rx="4"/><circle cx="22" cy="43" r="3"/>'},
+ {w:'필요한 것만 있는 방',k:'mid',ko:'알맞게 담긴 그림',en:'balanced composition with one clear focal point and a few supporting details',
+  svg:'<rect x="10" y="16" width="44" height="34" rx="4"/><rect x="15" y="38" width="13" height="8" rx="1"/><circle cx="43" cy="27" r="4"/>'},
+ {w:'좋아하는 것들이 가득한 방',k:'dense',ko:'꼼꼼히 채워진 그림',en:'intricate richly detailed illustration, scene filled with many small elements and fine textures',
+  svg:'<rect x="10" y="16" width="44" height="34" rx="4"/><rect x="14" y="38" width="12" height="8" rx="1"/><circle cx="42" cy="24" r="3.5"/><path d="M32 44 h14 M15 24 h10 M15 30 h7"/><circle cx="33" cy="27" r="2.5"/>'},
+ {w:'보물이 구석구석 숨은 방',k:'max',ko:'구석구석 빽빽한 그림',en:'extremely dense maximalist illustration, every corner filled with tiny delightful details to discover',
+  svg:'<rect x="10" y="16" width="44" height="34" rx="4"/><rect x="13" y="40" width="10" height="7" rx="1"/><rect x="26" y="42" width="8" height="5" rx="1"/><circle cx="18" cy="23" r="2.5"/><circle cx="27" cy="21" r="2"/><circle cx="36" cy="23" r="2.5"/><circle cx="45" cy="21" r="2"/><path d="M38 32 h12 M14 31 h9"/><circle cx="45" cy="42" r="3"/><circle cx="30" cy="32" r="2"/>'}],
 sounds:[
  {w:'잔잔한 물결',img:'assets/sound-calm.webp',ko:'잔잔함',k:'calm',icon:'〰'},
  {w:'통통 튀는 방울',img:'assets/sound-playful.webp',ko:'경쾌함',k:'playful',icon:'◔'},
@@ -397,10 +462,43 @@ kid:{
   {w:'내 맘대로 하고 싶어요',n:'autonomy'},{w:'힘이 세지고 싶어요',n:'competence'},
   {w:'가족이랑 오래오래 놀고 싶어요',n:'relatedness'},{w:'새로운 곳에 가보고 싶어요',n:'autonomy'},
   {w:'무서운 게 없어졌으면 해요',n:'safety'},{w:'내 얘기를 들어줬으면 해요',n:'relatedness'}],
- scenes:[
-  {w:'반짝이는 별하늘',p:'cool'},{w:'깊고 파란 바다',p:'cool'},{w:'숲속 오두막',p:'warm'},{w:'알록달록 무지개',p:'warm'},
-  {w:'눈 내리는 밤',p:'cool'},{w:'고소한 빵집',p:'warm'},{w:'씽씽 우주선',p:'cool'},{w:'향기로운 꽃밭',p:'warm'},
-  {w:'용이 사는 성',p:'warm'},{w:'바닷가 모래성',p:'warm'},{w:'구름 위 산책',p:'cool'},{w:'비밀의 문',p:'warm'}]
+ abstracts:[
+  {w:'진짜같이 생생한 꿈',k:'real',svg:'<path d="M12 48 h40"/><rect x="19" y="30" width="15" height="18"/><path d="M19 30 26.5 21 34 30"/><circle cx="45" cy="17" r="5"/>'},
+  {w:'신나는 모험이 이어지는 꿈',k:'story',svg:'<path d="M14 46 q10 -20 20 -10 t16 -14"/><circle cx="48" cy="20" r="3"/><path d="M14 46 l6 -2 M14 46 l2 -6"/>'},
+  {w:'만화처럼 웃긴 꿈',k:'story',svg:'<path d="M14 16 h36 v22 h-20 l-8 8 v-8 h-8 Z"/><circle cx="26" cy="27" r="2"/><circle cx="38" cy="27" r="2"/>'},
+  {w:'둥둥 떠다니는 이상한 꿈',k:'dream',svg:'<path d="M14 40 Q24 22 34 34 T54 30"/><circle cx="40" cy="18" r="3"/><circle cx="22" cy="26" r="2"/>'},
+  {w:'기분만 남고 잊어버리는 꿈',k:'dream',svg:'<path d="M16 44 q10 -8 20 -2 t16 -6"/><circle cx="30" cy="24" r="6" stroke-dasharray="3 4"/>'},
+  {w:'알록달록 색깔만 기억나는 꿈',k:'abs',svg:'<circle cx="24" cy="26" r="10"/><path d="M34 44 50 20 54 46 Z"/>'},
+  {w:'꿈은 잘 안 꿔!',k:'none',svg:'<path d="M24 20 a10 10 0 1 0 16 12 a12 12 0 1 1 -16 -12"/><path d="M40 44 l6 6 M46 44 l-6 6"/>'}],
+ weather:[
+  {w:'해가 쨍쨍한 날',lv:.3,la:.3,ko:'쨍한 해',lt:'bright cheerful sunlight'},
+  {w:'뭉게구름 둥둥',lv:.2,la:-.1,ko:'뭉게구름',lt:'fluffy clouds in a soft blue sky'},
+  {w:'보슬보슬 봄비',lv:0,la:-.3,ko:'보슬비',lt:'gentle light rain, fresh air'},
+  {w:'우르릉 천둥번개',lv:-.3,la:.4,ko:'천둥',lt:'distant storm clearing into calm light'},
+  {w:'펑펑 함박눈',lv:.2,la:-.2,ko:'함박눈',lt:'big soft snowflakes falling quietly'},
+  {w:'무지개 뜬 하늘',lv:.4,la:.1,ko:'무지개',lt:'rainbow after rain, hopeful light'},
+  {w:'주황빛 노을',lv:.2,la:-.1,ko:'노을',lt:'warm orange sunset glow'},
+  {w:'별이 가득한 밤',lv:.2,la:-.3,ko:'별밤',lt:'starry night sky, gentle moonlight'}],
+ memories:[
+  {w:'제일 신났던 소풍날',m:'warm'},{w:'칭찬을 듬뿍 받은 날',m:'achieve'},
+  {w:'처음으로 해냈던 것',m:'achieve'},{w:'가족이랑 깔깔 웃은 저녁',m:'warm'},
+  {w:'비밀기지를 만들던 날',m:'warm'},{w:'상 받고 박수 받은 날',m:'achieve'},
+  {w:'친구랑 다퉜던 날',m:'loss'},{w:'아끼던 걸 잃어버린 날',m:'loss'},
+  {w:'이사 가던 날',m:'loss'},{w:'혼자 기다렸던 오후',m:'solitude'},
+  {w:'무서운 꿈을 꾼 밤',m:'solitude'},{w:'속상해서 몰래 운 날',m:'solitude'}],
+ avoids:[
+  {w:'깜깜한 동굴에 갇혔을 때',ae:'dark narrow enclosed spaces'},
+  {w:'혼자 남겨진 밤',ae:'being left all alone'},
+  {w:'우르릉 쾅쾅 천둥이 칠 때',ae:'frightening loud thunder'},
+  {w:'모두가 쳐다보며 웃을 때',ae:'being teased, mocked or stared at'},
+  {w:'무서운 목소리로 혼날 때',ae:'loud scolding or shouting'},
+  {w:'갑자기 낯선 곳에 뚝 떨어졌을 때',ae:'sudden overwhelming unfamiliar places'},
+  {w:'아무도 말을 안 걸어줄 때',ae:'cold silence and being ignored'},
+  {w:'자꾸 다른 친구랑 비교될 때',ae:'being compared and judged'}],
+ metaphors:[
+  {w:'씩씩한 강아지',p:'warm'},{w:'높이 나는 새',p:'cool'},{w:'커다란 아름드리 나무',p:'warm'},{w:'반짝반짝 별',p:'cool'},
+  {w:'출렁이는 바다',p:'cool'},{w:'몽글몽글 구름',p:'cool'},{w:'따뜻한 모닥불',p:'warm'},{w:'단단한 돌멩이',p:'cool'},
+  {w:'졸졸 시냇물',p:'cool'},{w:'살랑살랑 바람',p:'cool'},{w:'활짝 핀 해바라기',p:'warm'},{w:'환한 보름달',p:'warm'}]
 },
 adult:{
  emotions:[
@@ -412,10 +510,43 @@ adult:{
   {w:'내 뜻대로 살고 싶다',n:'autonomy'},{w:'무언가 해내고 싶다',n:'competence'},{w:'깊이 연결되고 싶다',n:'relatedness'},
   {w:'아무 걱정 없이 쉬고 싶다',n:'safety'},{w:'다시 시작하고 싶다',n:'autonomy'},{w:'쓸모 있는 사람이고 싶다',n:'competence'},
   {w:'있는 그대로 이해받고 싶다',n:'relatedness'},{w:'안전하게 지켜지고 싶다',n:'safety'},{w:'다 잊고 깊이 잠들고 싶다',n:'safety'}],
- scenes:[
-  {w:'새벽의 바다',p:'cool'},{w:'오래된 서점',p:'warm'},{w:'비 오는 창가',p:'cool'},{w:'사막의 별',p:'cool'},
-  {w:'안개 낀 숲',p:'cool'},{w:'홀로 선 등대',p:'cool'},{w:'골목 끝 오래된 식당',p:'warm'},{w:'끝없는 설원',p:'cool'},
-  {w:'낡은 완행열차',p:'warm'},{w:'옥상 위 작은 정원',p:'warm'},{w:'심야의 도시 불빛',p:'cool'},{w:'절벽 위 하얀 집',p:'warm'}]
+ abstracts:[
+  {w:'어제 일처럼 또렷한 꿈',k:'real',svg:'<path d="M12 48 h40"/><rect x="19" y="30" width="15" height="18"/><path d="M19 30 26.5 21 34 30"/><circle cx="45" cy="17" r="5"/>'},
+  {w:'누군가를 만나 이야기하는 꿈',k:'story',svg:'<circle cx="24" cy="24" r="6"/><circle cx="42" cy="26" r="5"/><path d="M18 46 q6 -10 12 -10 t12 8"/>'},
+  {w:'이야기가 이어지는 긴 꿈',k:'story',svg:'<path d="M12 20 h32 M12 28 h40 M12 36 h36 M12 44 h24"/>'},
+  {w:'같은 꿈을 반복해서 꾸는 편',k:'dream',svg:'<path d="M32 14 a18 18 0 1 1 -13 6"/><path d="M19 20 19 12 M19 20 27 20"/>'},
+  {w:'장면은 흐릿한데 기분만 남는 꿈',k:'dream',svg:'<path d="M14 40 Q24 22 34 34 T54 30"/><path d="M16 48 q10 -8 20 -2 t16 -6"/><circle cx="40" cy="18" r="3"/>'},
+  {w:'색과 느낌만 남는 꿈',k:'abs',svg:'<circle cx="24" cy="26" r="10"/><path d="M34 44 50 20 54 46 Z"/><path d="M12 48 q12 -8 24 2"/>'},
+  {w:'꿈을 거의 기억하지 못한다',k:'none',svg:'<path d="M24 20 a10 10 0 1 0 16 12 a12 12 0 1 1 -16 -12"/><path d="M14 50 q18 6 36 0" stroke-dasharray="3 4"/>'}],
+ weather:[
+  {w:'구름 한 점 없는 맑음',lv:.3,la:.1,ko:'맑음',lt:'clear bright daylight'},
+  {w:'옅게 깔린 안개',lv:-.1,la:-.3,ko:'안개',lt:'soft morning fog, hazy diffused light'},
+  {w:'소나기 지나간 직후',lv:.2,la:0,ko:'비 갠 뒤',lt:'after-rain freshness, glistening light'},
+  {w:'그치지 않는 장마',lv:-.3,la:-.2,ko:'긴 장마',lt:'steady quiet rain, muted grey-blue light'},
+  {w:'첫눈 내리는 저녁',lv:.2,la:-.2,ko:'첫눈',lt:'first snow at dusk, warm window lights'},
+  {w:'붉게 타는 노을',lv:.1,la:.2,ko:'노을',lt:'burning sunset glow, long shadows'},
+  {w:'아직 어두운 새벽',lv:-.1,la:-.3,ko:'새벽',lt:'pre-dawn blue hour, faint first light'},
+  {w:'쨍한 한여름 한낮',lv:.2,la:.4,ko:'한낮',lt:'high summer noon, strong vivid light'}],
+ memories:[
+  {w:'여름방학 아침의 냄새',m:'warm'},{w:'할머니의 부엌',m:'warm'},
+  {w:'이불 속에서 읽던 만화책',m:'warm'},{w:'처음 두발자전거를 탄 날',m:'achieve'},
+  {w:'상장을 받고 들은 박수',m:'achieve'},{w:'밤새워 해내고 맞은 아침',m:'achieve'},
+  {w:'전학 가던 날의 교실',m:'loss'},{w:'잃어버려서 아직 아까운 물건',m:'loss'},
+  {w:'이사 트럭을 배웅하던 골목',m:'loss'},{w:'혼자 남아 있던 오후',m:'solitude'},
+  {w:'창밖만 보던 수업 시간',m:'solitude'},{w:'불 꺼진 집에 들어서던 저녁',m:'solitude'}],
+ avoids:[
+  {w:'모두가 등을 돌린 밤',ae:'abandonment and isolation'},
+  {w:'하루아침에 길이 사라진 것',ae:'sudden upheaval and chaos'},
+  {w:'빛이 닿지 않는 좁은 동굴',ae:'claustrophobic dark spaces'},
+  {w:'광장에 쏟아지는 시선들',ae:'crowds of staring strangers'},
+  {w:'아무도 답하지 않는 침묵',ae:'cold silence and being ignored'},
+  {w:'저울 위에 올려져 견주어지는 것',ae:'being compared and judged'},
+  {w:'우레 같은 호통 소리',ae:'loud shouting and harsh confrontation'},
+  {w:'들켜버린 실수 앞의 웃음소리',ae:'public failure and ridicule'}],
+ metaphors:[
+  {w:'깊게 뿌리내린 나무',p:'warm'},{w:'밀물과 썰물의 바다',p:'cool'},{w:'흔들려도 꺼지지 않는 촛불',p:'warm'},{w:'어디로든 부는 바람',p:'cool'},
+  {w:'오래 침묵해 온 돌',p:'cool'},{w:'계절을 아는 철새',p:'cool'},{w:'얕지만 맑은 시냇물',p:'cool'},{w:'천천히 식은 화산',p:'warm'},
+  {w:'오래된 우물',p:'cool'},{w:'노을을 향해 나는 연',p:'warm'},{w:'등불을 켜 두는 사람',p:'warm'},{w:'안개 속의 새벽 종소리',p:'cool'}]
 }};
 
 const ROUNDS=[
@@ -423,16 +554,28 @@ const ROUNDS=[
   note:'예쁜 색 말고, 그냥 끌리는 색이면 돼요.'},
  {key:'shape',type:'shape',pick:1, kid:'제일 마음에 드는 모양은 뭐야?', adult:'가장 눈이 머무는 형태\n하나를 골라주세요',
   note:'이유는 몰라도 괜찮아요.'},
+ {key:'style',type:'style',pick:1, kid:'미술관에 왔어!\n어떤 그림 앞에 제일 오래 서 있을 것 같아?', adult:'전시장에서 발걸음이\n가장 오래 머무는 그림은 어느 쪽인가요',
+  note:'떠오르는 대로, 한 점만 골라 보세요.'},
+ {key:'detail',type:'detail',pick:1, kid:'어떤 방에 있고 싶어?', adult:'어떤 방에 있을 때\n숨이 가장 편해지나요',
+  note:'지금 사는 방 말고, 마음이 바라는 방이요.'},
+ {key:'abstract',type:'abstract',pick:1, kid:'자고 일어나면\n어떤 꿈이 제일 오래 남아?', adult:'꿈에서 깬 아침,\n어떤 꿈이 가장 오래 남나요',
+  note:'기억나는 꿈 하나를 떠올려 보세요.'},
  {key:'space',type:'space',pick:1, kid:'어디에 있으면 제일 편할 것 같아?', adult:'지금 머물고 싶은 자리는\n어디인가요',
   note:'상상 속에서 골라보세요.'},
  {key:'sound',type:'sound',pick:1, kid:'눌러서 들어보고\n제일 좋은 소리를 골라줘', adult:'눌러서 들어보고\n마음에 닿는 소리를 골라주세요',
   note:'소리가 안 나면 오른쪽 위 ♪ 버튼을 확인해 주세요.'},
+ {key:'weather',type:'word',pick:1, kid:'지금 네 마음속 날씨는 어때?', adult:'지금 마음속 날씨를\n하나 골라주세요',
+  note:'창밖 날씨 말고, 마음 안쪽의 날씨요.'},
  {key:'emotions',type:'word',pick:3, kid:'요즘 네 마음이랑 닮은 말을\n세 개 골라볼까?', adult:'요즘의 마음과 가장 가까운 단어\n세 개를 골라주세요',
   note:'맞고 틀린 답은 없어요. 그냥 끌리는 대로.'},
+ {key:'memories',type:'word',pick:2, kid:'마음 서랍에서\n기억 두 개만 꺼내볼까?', adult:'문득 떠오르는 기억의 조각\n두 개를 골라주세요',
+  note:'좋은 기억도, 아픈 기억도 괜찮아요. 이야기가 조심스럽게 품어줄 거예요.'},
  {key:'desires',type:'word',pick:3, kid:'요술램프가 소원을 들어준대!\n세 가지만 골라봐', adult:'지금 마음이 조용히 바라는 것\n세 개를 골라주세요',
   note:'말이 안 되는 소원이어도 괜찮아요.'},
- {key:'scenes',type:'word',pick:3, kid:'어떤 곳으로 떠나고 싶어?\n세 군데 골라줘', adult:'눈을 감았을 때 머물고 싶은 장면\n세 개를 골라주세요',
-  note:'이 장면들이 동화의 배경이 됩니다.'}
+ {key:'avoids',type:'word',pick:1, kid:'이야기 속 주인공이\n제일 무서웠을 것 같은 건 뭐야?', adult:'옛이야기의 주인공이 가장 견디기\n힘들었을 순간은 어느 쪽일까요',
+  note:'정답은 없어요. 마음이 먼저 움찔하는 쪽이면 돼요.'},
+ {key:'metaphors',type:'word',pick:2, kid:'만약 변신할 수 있다면\n뭐가 제일 어울릴 것 같아? 둘!', adult:'오래 알고 지낸 이가 당신을 무언가에\n빗댄다면, 가까운 쪽 둘을 골라주세요',
+  note:'이유는 몰라도 괜찮아요. 끌리는 쪽으로.'}
 ];
 
 /* ═══════════ 상태 & 화면 전환 ═══════════ */
@@ -448,8 +591,8 @@ function lifeUp(){ const n=lifeCount()+1; store.set('sd_life',String(n));
   try{ document.cookie='sdlc='+n+'; max-age=315360000; path=/; SameSite=Lax'; }catch(e){} }
 function lifeLocked(){ return !MASTER && lifeCount()>=2; }
 
-const EMPTY_PICKS=()=>({colors:[],shape:[],space:[],sound:[],emotions:[],desires:[],scenes:[]});
-const S={mode:null, round:0, picks:EMPTY_PICKS(), story:null, images:[null,null,null,null], analysis:null, page:0};
+const EMPTY_PICKS=()=>({colors:[],shape:[],style:[],detail:[],abstract:[],space:[],sound:[],weather:[],emotions:[],memories:[],desires:[],avoids:[],metaphors:[]});
+const S={mode:null, round:0, picks:EMPTY_PICKS(), user:{name:'',contact:''}, story:null, images:[null,null,null,null], analysis:null, page:0};
 const $=id=>document.getElementById(id);
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on')); $(id).classList.add('on'); }
 function doorWipe(cb){ const w=$('doorwipe'); w.classList.add('go'); w.classList.remove('open');
@@ -461,8 +604,16 @@ document.querySelectorAll('.mode-card').forEach(b=>b.onclick=()=>{
   if(lifeLocked()){ alert('이야기의 문은 한 사람에게 평생 두 번 열립니다.\n당신의 두 이야기는 이미 지어졌어요. 오래 간직해 주세요.'); return; }
   S.mode=b.dataset.mode; document.body.classList.toggle('kid',S.mode==='kid');
   S.round=0; S.picks=EMPTY_PICKS();
-  doorWipe(()=>{ renderRound(); show('scr-cards'); });
+  Snd.ting(); show('scr-info'); setTimeout(()=>$('uName').focus(),400);
 });
+$('infoBtn').onclick=()=>{
+  const name=$('uName').value.trim(), contact=$('uContact').value.trim();
+  if(!name){ alert('문패에 새길 이름을 적어주세요.'); $('uName').focus(); return; }
+  if(contact.length<3){ alert('네이버 아이디 또는 전화번호 중 하나를 꼭 적어주세요.'); $('uContact').focus(); return; }
+  if(!$('uAgree').checked){ alert('동의에 체크해 주셔야 이야기의 문이 열려요.'); return; }
+  S.user={name,contact};
+  doorWipe(()=>{ renderRound(); show('scr-cards'); });
+};
 
 /* ═══════════ 카드 라운드 ═══════════ */
 function renderRound(){
@@ -477,7 +628,8 @@ function renderRound(){
   const grid=$('cardGrid'); grid.innerHTML='';
   grid.className = r.type==='word' ? 'cards' : 'sense';
   const items = r.type==='word' ? BANK[S.mode][r.key]
-    : SENSE[{color:'colors',shape:'shapes',space:'spaces',sound:'sounds'}[r.type]];
+    : r.type==='abstract' ? BANK[S.mode].abstracts
+    : SENSE[{color:'colors',shape:'shapes',style:'styles',detail:'details',space:'spaces',sound:'sounds'}[r.type]];
   items.forEach(item=>{
     let b=document.createElement('button');
     if(r.type==='color'){ b.className='swatch'; b.style.background=item.c; b.title=item.w; b.setAttribute('aria-label',item.w); }
@@ -500,6 +652,24 @@ function renderRound(){
     };
     grid.appendChild(b);
   });
+  if(r.type==='word'){
+    const c=document.createElement('button'); c.className='wcard addw'; c.textContent='＋ 직접 쓰기';
+    c.onclick=()=>{
+      const arr=S.picks[r.key];
+      if(arr.length>=r.pick){ alert('이미 '+r.pick+'개를 골랐어요. 하나를 취소한 뒤 눌러주세요.'); return; }
+      const w=(window.prompt('마음에 있는 말을 직접 적어주세요 (12자 이내)')||'').trim().slice(0,12);
+      if(!w) return;
+      if(arr.includes(w)) return;
+      arr.push(w);
+      const b2=document.createElement('button'); b2.className='wcard picked'; b2.textContent=w;
+      b2.onclick=()=>{ const j=arr.indexOf(w); if(j>=0){ arr.splice(j,1); b2.remove(); Snd.tick(); }
+        $('nextBtn').disabled=arr.length!==r.pick; };
+      grid.insertBefore(b2,c); Snd.ting();
+      $('nextBtn').disabled=arr.length!==r.pick;
+      $('nextBtn').textContent = S.round===ROUNDS.length-1 ? '이야기의 문 열기' : '다음';
+    };
+    grid.appendChild(c);
+  }
   $('nextBtn').disabled=true; $('nextBtn').textContent='다음';
 }
 $('nextBtn').onclick=()=>{
@@ -510,26 +680,37 @@ $('nextBtn').onclick=()=>{
 /* ═══════════ 심리 판정 엔진 ═══════════ */
 function analyze(){
   const bank=BANK[S.mode]; const isKid=S.mode==='kid';
-  // 1) 정서 좌표 — 감정 단어(60%) + 색 선택(40%) 교차 (밝기→쾌, 채도→각성)
+  // 1) 정서 좌표 — 감정 단어(55%) + 색(30%) + 마음 날씨(15%) 교차
   const em=bank.emotions.filter(e=>S.picks.emotions.includes(e.w));
-  const wv=em.reduce((s,e)=>s+e.v,0)/em.length, wa=em.reduce((s,e)=>s+e.a,0)/em.length;
+  const wv=em.length?em.reduce((s,e)=>s+e.v,0)/em.length:0, wa=em.length?em.reduce((s,e)=>s+e.a,0)/em.length:0;
   const cs=SENSE.colors.filter(c=>S.picks.colors.includes(c.w));
-  const cv=cs.reduce((s,c)=>s+c.v,0)/cs.length, ca=cs.reduce((s,c)=>s+c.a,0)/cs.length;
-  const v=wv*.6+cv*.4, a=wa*.6+ca*.4;
-  // 2) 결핍 욕구 — 바람 단어 + 머물고 싶은 공간(전망-은신) 가중 합산
+  const cv=cs.length?cs.reduce((s,c)=>s+c.v,0)/cs.length:0, ca=cs.length?cs.reduce((s,c)=>s+c.a,0)/cs.length:0;
+  const wx=bank.weather.find(x=>S.picks.weather.includes(x.w));
+  const v=wv*.55+cv*.3+(wx?wx.lv:0)*.15, a=wa*.55+ca*.3+(wx?wx.la:0)*.15;
+  // 2) 결핍 욕구 — 바람 단어 + 공간(1.5) + 기억의 결(0.5)
   const cnt={autonomy:0,competence:0,relatedness:0,safety:0};
   bank.desires.filter(d=>S.picks.desires.includes(d.w)).forEach(d=>cnt[d.n]++);
   const space=SENSE.spaces.find(s=>s.w===S.picks.space[0]); cnt[space.n]+=1.5;
+  const mem=bank.memories.filter(m=>S.picks.memories.includes(m.w));
+  mem.forEach(m=>{ if(m.m==='loss'||m.m==='solitude') cnt.relatedness+=.5;
+    if(m.m==='warm') cnt.safety+=.3; if(m.m==='achieve') cnt.competence+=.3; });
   const need=Object.keys(cnt).sort((x,y)=>cnt[y]-cnt[x])[0];
-  // 3) 팔레트 — 색 선택(주) + 장면 단어(보조)
-  const sc=bank.scenes.filter(s=>S.picks.scenes.includes(s.w));
+  // 3) 팔레트 — 색(주) + 장면 단어(보조)
+  const sc=bank.metaphors.filter(s=>S.picks.metaphors.includes(s.w));
   const warmVotes=cs.filter(c=>c.t==='warm').length*1.5 + sc.filter(s=>s.p==='warm').length;
   const coolVotes=cs.filter(c=>c.t==='cool').length*1.5 + sc.filter(s=>s.p==='cool').length;
   const palette = warmVotes>=coolVotes ? 'warm' : 'cool';
-  // 4) 형태·소리 취향
+  // 4) 형태·소리·기억·회피
   const shape=SENSE.shapes.find(s=>s.w===S.picks.shape[0]);
+  const styleChoice=SENSE.styles.find(s=>s.w===S.picks.style[0])||SENSE.styles[0];
+  const det=SENSE.details.find(d=>d.w===S.picks.detail[0]);
+  const absPick=bank.abstracts.find(d=>d.w===S.picks.abstract[0]);
   const sound=SENSE.sounds.find(s=>s.w===S.picks.sound[0]);
   const lively = sound.k==='playful'||sound.k==='sparkle';
+  const av=bank.avoids.find(x=>S.picks.avoids.includes(x.w));
+  const avoidKo=S.picks.avoids.join(', ');
+  const MEMKO={warm:'따뜻한 돌봄',achieve:'해냈던 순간',loss:'상실',solitude:'홀로였던 시간'};
+  const memoryKo=[...new Set(mem.map(m=>MEMKO[m.m]))].join('과 ')+'의 기억' + (S.picks.memories.some(w=>!mem.find(m=>m.w===w))?' (직접 적은 기억 포함)':'');
 
   const needKo={autonomy:'자유와 스스로 선택하는 힘(자율성)',competence:'해내는 기쁨과 인정(유능감)',
     relatedness:'곁에 있어주는 존재와의 연결(관계성)',safety:'안심하고 쉴 수 있는 품(안전감)'}[need];
@@ -537,41 +718,47 @@ function analyze(){
     ? (a>=0?'밝고 활기찬 상태':'평온하고 따뜻한 상태')
     : (a>=.15?'긴장과 불안이 높은 상태 — 진정이 필요함':'기운이 가라앉고 지친 상태 — 따뜻한 온기가 필요함');
 
-  // 이미지 스타일 판정 (미술치료·정서 연구 응용)
-  let styleEn, styleKo;
-  if(isKid){
-    styleEn='cheerful children\'s picture book illustration, rounded soft shapes, bright saturated colors, friendly and cozy';
-    styleKo='밝고 채도 높은 그림책 일러스트 (동글동글한 형태)';
-  } else if(v<0 && a>=.15){
-    styleEn='soft watercolor illustration, muted pastel palette, gentle diffused light, minimal detail, calm and soothing atmosphere';
-    styleKo='마음을 진정시키는 흐린 파스텔 수채화 (디테일 최소화)';
-  } else if(v<0){
-    styleEn='warm painterly storybook illustration, soft textures, a gradually brightening golden light breaking through, quiet hopeful mood';
-    styleKo='온기가 스며드는 회화풍 — 서서히 밝아지는 금빛';
-  } else {
-    styleEn='richly detailed storybook painting, warm luminous colors, wonder and delight';
-    styleKo='따뜻하고 풍성한 디테일의 동화 삽화';
-  }
-  styleEn += palette==='warm' ? ', warm color palette' : ', deep blue and cool color palette with warm accents';
-  styleEn += ', '+shape.en;                       // 끌린 형태를 화면의 조형 언어로
+  /* ── 화풍 결정: 고른 형태가 화풍(재료) 자체를 정합니다 — 선택마다 확실히 다른 그림 ── */
+  const MEDIA={
+   round:{en:'soft watercolor illustration, gentle wet-on-wet blends, organic rounded forms, visible paper texture',ko:'부드러운 수채화'},
+   spiky:{en:'bold paper cut-out collage illustration, layered torn and cut paper textures, crisp sharp shapes, strong contrast',ko:'대담한 종이 콜라주'},
+   grid:{en:'flat geometric mid-century style illustration, clean simple shapes, balanced composition, subtle screen-print grain',ko:'기하학적 플랫 일러스트'},
+   spiral:{en:'dreamlike soft-pastel surrealism, swirling flowing forms, hazy glowing edges, floating elements',ko:'몽환적 파스텔 초현실화'},
+   wave:{en:'expressive East Asian ink-wash painting with light color tints, flowing calligraphic brush strokes, generous empty space',ko:'수묵 담채화'},
+   arrow:{en:'linocut block-print style illustration, strong carved lines, limited bold color palette, handmade print texture',ko:'힘있는 판화'}
+  };
+  const absK = absPick.k==='none' ? (v<0 ? 'dream' : 'story') : absPick.k;
+  const abs_=ABS_DEF[absK];
+  const media = styleChoice.k==='auto' ? MEDIA[shape.k] : styleChoice;
+  let styleEn=media.en+', '+abs_.en+', '+det.en, moodStyleKo;
+  if(v<0 && a>=.15){ styleEn+=', muted calming palette, minimal detail, soothing quiet atmosphere'; moodStyleKo='차분히 가라앉힌 색'; }
+  else if(v<0){ styleEn+=', warm golden light gradually breaking through, soft hopeful mood'; moodStyleKo='서서히 밝아지는 온기'; }
+  else if(a>=.2){ styleEn+=', vivid luminous colors, joyful energy'; moodStyleKo='생기 넘치는 색'; }
+  else { styleEn+=', warm rich harmonious colors, serene mood'; moodStyleKo='따뜻하고 고요한 색'; }
+  if(isKid && styleChoice.k==='auto') styleEn+=', award-winning children\'s picture book quality, charming character design, expressive friendly faces, higher saturation';
+  styleEn += palette==='warm' ? ', warm color palette' : ', deep blue and cool palette with warm accents';
+  if(wx) styleEn += ', '+wx.lt;
   styleEn += lively ? ', lively rhythm and playful sense of movement' : ', quiet serene stillness';
 
-  // 인물 연출 (욕구별 구도)
   const fig={
     autonomy:{en:'a lone protagonist small within a vast open landscape, wide horizon, sense of freedom', ko:'광활한 풍경 속 주인공 홀로 — 자유의 구도'},
     competence:{en:'the protagonist in an ascending composition, reaching upward or standing accomplished, uplifting angle', ko:'위로 오르는 성취의 구도'},
     relatedness:{en:'the protagonist together with a warm companion, side by side, tender closeness', ko:'곁을 지켜주는 존재와 함께 있는 구도'},
     safety:{en:'the protagonist wrapped in a cozy sheltering space, soft enclosing light, embraced and protected', ko:'포근하게 감싸이는 안식의 구도'}
   }[need];
-  styleEn += ', '+fig.en;
-  if(!isKid) styleEn += ', human figures shown from behind or as soft silhouettes';
-  styleEn += ', vertical 2:3 composition, no text, no letters, no watermark';
+  if(absK==='abs'){ styleEn += ', the protagonist suggested only as a form of light and color'; }
+  else { styleEn += ', '+fig.en;
+    if(!isKid) styleEn += ', human figures shown from behind or as soft silhouettes'; }
+  if(av) styleEn += ', peaceful and safe scene, absolutely no '+av.ae;
+  styleEn += ', masterful composition and lighting, award-winning illustration quality, vertical 2:3 composition, no text, no letters, no watermark';
 
   const colorKo=cs.map(c=>c.w).join('·')+' 계열('+(palette==='warm'?'따뜻한 쪽':'차분한 쪽')+')';
-  const senseKo=`색은 ${colorKo}, 형태는 ${shape.ko}, 머물고 싶은 자리는 ${space.w}, 소리는 ${sound.ko}`;
-  return {v,a,need,palette,needKo,moodKo,styleKo:styleKo+' · '+fig.ko,styleEn,
-    colorKo,shapeKo:shape.ko,spaceKo:space.w,soundKo:sound.ko,senseKo};
+  const senseKo=`색은 ${colorKo}, 형태는 ${shape.ko}, 자리는 ${space.w}, 소리는 ${sound.ko}`+(wx?`, 마음 날씨는 ${wx.ko}`:'');
+  const styleKo=`${media.ko} · ${abs_.ko} · ${det.ko} (${moodStyleKo}${wx?', '+wx.ko+' 빛':''}) · ${fig.ko}`;
+  return {v,a,need,palette,needKo,moodKo,styleKo,styleEn,
+    colorKo,shapeKo:shape.ko,spaceKo:space.w,soundKo:sound.ko,memoryKo,avoidKo,senseKo};
 }
+
 
 /* ═══════════ 생성 (Claude → gpt-image-2) — 글과 그림이 다 완성된 뒤 책이 열립니다 ═══════════ */
 const STORYMSGS=['마음의 별자리를 읽는 중','작가 요정이 첫 문장을 고르는 중','주인공에게 어울리는 이름을 짓는 중','이야기의 씨앗에 물을 주는 중','문장들이 나란히 줄을 서는 중'];
@@ -593,14 +780,14 @@ async function startCreate(){
   setProg(0,'이야기를 짓기 시작했어요');
   try{
     const r=await fetch('/api/story',{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({mode:S.mode,picks:S.picks,master:MASTER,analysis:{moodKo:A.moodKo,needKo:A.needKo,styleKo:A.styleKo,senseKo:A.senseKo}})});
+      body:JSON.stringify({mode:S.mode,picks:S.picks,master:MASTER,user:S.user,analysis:{moodKo:A.moodKo,needKo:A.needKo,styleKo:A.styleKo,senseKo:A.senseKo,memoryKo:A.memoryKo,avoidKo:A.avoidKo}})});
     const data=await r.json();
     if(!r.ok) throw new Error(data.error||'오류');
-    S.story=data.story; S.images=[null,null,null,null]; S.page=0;
+    S.story=data.story; S.recId=data.recId||null; S.images=[null,null,null,null]; S.page=0;
     if(!MASTER) lifeUp();
     buildBook();
-    msgPool=IMGMSGS; setProg(2,'이야기 완성! 이제 그림을 그려요 (2~3분 걸릴 수 있어요)');
-    await Promise.all([0,1,2,3].map(i=>fetchOneAuto(i)));
+    msgPool=IMGMSGS; setProg(2,'이야기 완성! 이제 그림을 그려요 (2~4분 걸릴 수 있어요)');
+    for(const pair of [[0,1],[2,3]]) await Promise.all(pair.map(i=>fetchOneAuto(i)));
     clearInterval(loadTimer);
     const fails=4-S.images.filter(Boolean).length;
     setProg(6, fails? `그림 ${fails}장은 완성하지 못했어요 — 책 안에서 다시 그릴 수 있어요` : '동화책이 완성됐어요!');
@@ -623,17 +810,31 @@ function imagePrompt(i){ // 0=표지, 1~3=장면
 }
 async function fetchOnce(i){
   const r=await fetch('/api/image',{method:'POST',headers:{'content-type':'application/json'},
-    body:JSON.stringify({prompt:imagePrompt(i),master:MASTER})});
+    body:JSON.stringify({prompt:imagePrompt(i),master:MASTER,recId:S.recId,slot:i})});
   const data=await r.json();
   if(!r.ok) throw new Error(data.error||'오류');
-  S.images[i]='data:image/png;base64,'+data.b64; // 원본 화질 그대로 보관 (인쇄용)
+  let b64, mime='image/png';
+  if(data.chunked){ // 원본이 커서 저장소에서 조각으로 받아 조립
+    let s='', off=0;
+    while(true){
+      const rr=await fetch('/api/imgpart',{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({recId:S.recId,slot:i,offset:off})});
+      const dd=await rr.json();
+      if(!rr.ok) throw new Error(dd.error||'오류');
+      s+=dd.part; off+=dd.part.length;
+      if(dd.done) break;
+    }
+    if(!s) throw new Error('그림 데이터를 받지 못했어요');
+    const p=s.indexOf('|'); mime=s.slice(0,p); b64=s.slice(p+1);
+  } else { b64=data.b64; mime=data.mime||'image/png'; }
+  S.images[i]='data:'+mime+';base64,'+b64; // 원본 화질 그대로 보관 (인쇄용)
   placeImg(i);
 }
 async function fetchOneAuto(i){ // 실패 시 자동 2회 재시도
   for(let t=1;t<=3;t++){
     try{ await fetchOnce(i); bumpImg(); return; }
     catch(e){ if(t===3) setPh(i,e.message,true);
-      else { setPh(i,`잘 안 그려져서 다시 그리는 중 (${t+1}번째 시도)…`,false); await sleep(1800); } }
+      else { setPh(i,`잘 안 그려져서 다시 그리는 중 (${t+1}번째 시도)…`,false); await sleep(t===1?8000:15000); } }
   }
 }
 async function retryOne(i){ // 책 안 "다시 그리기" 버튼용
@@ -677,7 +878,7 @@ function buildBook(){
     const sp=document.createElement('div'); sp.className='spread';
     sp.appendChild(art(0));
     const t=document.createElement('div'); t.className='txt';
-    const e=document.createElement('div'); e.className='chap'; e.textContent='당신을 위한 동화'; t.appendChild(e);
+    const e=document.createElement('div'); e.className='chap'; e.textContent=(S.user.name?S.user.name+'님':'당신')+'을 위한 동화'; t.appendChild(e);
     const h=document.createElement('h2'); h.className='cover-t serif'; h.textContent=S.story.title; t.appendChild(h);
     const s=document.createElement('p'); s.className='cover-s'; s.textContent=S.story.protagonist; t.appendChild(s);
     sp.appendChild(t); p.appendChild(sp); pages.push(p);
@@ -701,7 +902,7 @@ function buildBook(){
     const e=document.createElement('div'); e.className='chap'; e.textContent='이야기를 덮으며'; t.appendChild(e);
     const b=document.createElement('div'); b.className='body serif'; b.style.textAlign='center'; b.textContent=S.story.closing; t.appendChild(b);
     const rx=document.createElement('div'); rx.className='rx';
-    rx.textContent=`이 동화가 지어진 이유 — 지금 마음은 ${A.moodKo}였어요. 당신이 고른 감각을 보면 ${A.senseKo}였고, 마음이 가장 바라는 것은 ${A.needKo}이었어요. 그래서 이야기 속에서 그 바람이 이루어지도록 했고, 그림은 ${A.styleKo}로 그렸습니다.`;
+    rx.textContent=`이 동화가 지어진 이유 — 지금 마음은 ${A.moodKo}였어요. ${A.senseKo}였고, 마음이 가장 바라는 것은 ${A.needKo}이었어요. 당신이 꺼낸 ${A.memoryKo}은 이야기의 밑색이 되었고, '${A.avoidKo}'은 이야기에 들이지 않았습니다. 고른 단어들은 그대로 쓰지 않고 같은 마음결의 다른 이야기로 바꾸어 지었으며, 그림은 ${A.styleKo}로 그렸습니다.`;
     t.appendChild(rx); sp.appendChild(t); p.appendChild(sp); pages.push(p);
   }
   // 뿌리(참고 연구) 페이지
@@ -777,7 +978,7 @@ $('dlBook').onclick=()=>{
   const A=S.analysis;
   let pages='';
   const pg=(img,chap,inner,cls)=>`<section class="pg ${cls||''}">${img?`<div class="im"><img src="${img}" alt=""></div>`:''}<div class="tx">${chap?`<div class="ch">${esc(chap)}</div>`:''}${inner}</div></section>`;
-  pages+=pg(S.images[0],'당신을 위한 동화',`<h1>${esc(S.story.title)}</h1><p class="s">${esc(S.story.protagonist)}</p>`,'');
+  pages+=pg(S.images[0],(S.user.name?S.user.name+'님':'당신')+'을 위한 동화',`<h1>${esc(S.story.title)}</h1><p class="s">${esc(S.story.protagonist)}</p>`,'');
   S.story.scenes.forEach((s,i)=>{ pages+=pg(S.images[i+1],CHAPS[i],`<p class="b">${esc(s.text).replace(/\n/g,'<br>')}</p>`,''); });
   pages+=pg(null,'이야기를 덮으며',`<p class="b c">${esc(S.story.closing)}</p><p class="rx">이 동화가 지어진 이유 — 지금 마음은 ${esc(A.moodKo)}였어요. ${esc(A.senseKo)}였고, 마음이 가장 바라는 것은 ${esc(A.needKo)}이었어요. 그림은 ${esc(A.styleKo)}로 그렸습니다.</p>`,'noimg');
   const srcs=SOURCES.map(s=>`<b>${esc(s.t)}</b><span>${esc(s.d)}</span>`).join('')+`<i class="note">${esc(SRC_NOTE)}</i>`;
