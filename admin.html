@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Gowun Dodum',sans-serif;background:radial-gradient(120% 90% at 50% 110%, #232f57 0%, #141b38 45%, #0b1029 100%);color:#f7eeda;min-height:100vh;padding:24px 16px 60px}
+body{font-family:'Gowun Dodum',sans-serif;background:radial-gradient(120% 90% at 50% 110%, #232f57 0%, #141b38 45%, #0b1029 100%);color:#f7eeda;min-height:100vh;padding:24px 16px 60px;word-break:keep-all;overflow-wrap:break-word}
 .wrap{max-width:1080px;margin:0 auto}
 h1{font-family:'Gowun Batang',serif;font-size:1.5rem;letter-spacing:.08em;margin-bottom:4px}
 .sub{font-size:.85rem;opacity:.7;margin-bottom:22px}
@@ -34,7 +34,7 @@ td .mini{font:inherit;font-size:.78rem;padding:6px 10px;margin-right:4px}
 #detail .meta{font-size:.82rem;color:#8a7350;margin-bottom:14px}
 #detail .imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:14px 0}
 #detail .imgs img{width:100%;border-radius:8px;display:block}
-#detail .story{white-space:pre-wrap;line-height:1.95;font-size:.95rem;font-family:'Gowun Batang',serif;margin-top:8px}
+#detail .story{white-space:pre-wrap;line-height:1.95;font-size:.95rem;font-family:'Gowun Batang',serif;margin-top:8px;text-wrap:pretty}
 #detail .btns{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
 #detail .btns button{background:#efe3c8;border-color:#c9b184;color:#5a4a28}
 #gate{max-width:420px;margin:80px auto;text-align:center}
@@ -209,12 +209,12 @@ function downloadBook(rec,imgs){
   (rec.story.scenes||[]).forEach((s,i)=>{ pages+=pg(imgs[i+1],CH[i],'<p class="b">'+esc2(s.text).replace(/\n/g,'<br>')+'</p>'); });
   pages+=pg(null,'이야기를 덮으며','<p class="b c">'+esc2(rec.story.closing||'')+'</p>'+(A.moodKo?'<p class="rx">'+esc2('지어진 이유 — '+A.moodKo+' / '+(A.needKo||'')+' / '+(A.styleKo||''))+'</p>':''),'noimg');
   const html='<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc2(rec.title)+'</title><style>'
-    +'*{box-sizing:border-box}body{margin:0;background:#efe6d2;font-family:sans-serif;color:#3a2f22}'
+    +'*{box-sizing:border-box}body{margin:0;background:#efe6d2;font-family:sans-serif;color:#3a2f22;word-break:keep-all;overflow-wrap:break-word}'
     +'.ui{position:sticky;top:0;display:flex;gap:8px;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(239,230,210,.95);border-bottom:1px solid #d8c9a8}'
     +'.ui button{font:inherit;font-size:.8rem;padding:7px 12px;border-radius:99px;border:1px solid #c9b184;background:#f7eeda;cursor:pointer}'
     +'.pg{max-width:680px;margin:26px auto;background:#f7eeda;border-radius:14px;overflow:hidden;box-shadow:0 10px 34px rgba(60,45,20,.18)}'
     +'.pg .im img{width:100%;display:block}.tx{padding:28px 32px 38px}.ch{font-size:.72rem;letter-spacing:.3em;color:#a3865a;margin-bottom:12px}'
-    +'h1{font-size:1.8rem;margin:0 0 10px;line-height:1.5}.s{color:#8a7350;margin:0}.b{line-height:2.05;white-space:pre-wrap;font-size:1.05rem;margin:0}.c{text-align:center}'
+    +'h1{font-size:1.8rem;margin:0 0 10px;line-height:1.5;text-wrap:balance}.s{color:#8a7350;margin:0}.b{line-height:2.05;white-space:pre-wrap;font-size:1.05rem;margin:0;text-wrap:pretty}.c{text-align:center}'
     +'.rx{margin-top:18px;padding:14px 16px;border:1px dashed #c9b184;border-radius:12px;font-size:.85rem;line-height:1.8;color:#6b5a35}'
     +'@media print{.ui{display:none}body{background:#fff}.pg{max-width:100%;margin:0;border-radius:0;box-shadow:none;page-break-after:always}}'
     +'</style></head><body><header class="ui"><b>'+esc2(rec.title)+'</b><button onclick="window.print()">인쇄</button></header>'

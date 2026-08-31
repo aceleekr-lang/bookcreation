@@ -24,6 +24,7 @@
 html,body{height:100%}
 body{
   font-family:'Gowun Dodum',sans-serif; background:var(--ink); color:var(--paper);
+  word-break:keep-all; overflow-wrap:break-word;
   overflow:hidden; position:fixed; inset:0; width:100%;
   background:radial-gradient(120% 90% at 50% 110%, #232f57 0%, #141b38 45%, #0b1029 100%);
 }
@@ -72,11 +73,11 @@ h1,h2,.serif{font-family:'Gowun Batang',serif}
   border:1px solid rgba(247,238,218,.3);background:rgba(255,255,255,.06);color:var(--paper)}
 .tin:focus{outline:none;border-color:var(--candle);box-shadow:0 0 14px rgba(240,195,107,.25)}
 .tin::placeholder{color:rgba(247,238,218,.45)}
-.agree{font-size:.82rem;opacity:.85;display:flex;gap:9px;align-items:flex-start;text-align:left;line-height:1.6;cursor:pointer}
+.agree{font-size:.82rem;opacity:.85;display:flex;gap:9px;align-items:flex-start;text-align:left;line-height:1.6;cursor:pointer;text-wrap:pretty}
 .agree input{margin-top:3px;accent-color:var(--candle);width:16px;height:16px;flex:none}
-h1.title{font-size:clamp(1.9rem,6vw,3rem);font-weight:700;letter-spacing:.12em;
+h1.title{font-size:clamp(1.9rem,6vw,3rem);font-weight:700;letter-spacing:.12em;text-wrap:balance;
   text-shadow:0 0 30px rgba(240,195,107,.35)}
-.sub{margin-top:10px;font-size:clamp(.9rem,2.6vw,1.05rem);opacity:.8;line-height:1.7}
+.sub{margin-top:10px;font-size:clamp(.9rem,2.6vw,1.05rem);opacity:.8;line-height:1.7;text-wrap:pretty}
 
 /* ── 문 열림 전환 오버레이 ── */
 #doorwipe{position:fixed;inset:0;z-index:50;display:none;pointer-events:none}
@@ -108,8 +109,8 @@ h1.title{font-size:clamp(1.9rem,6vw,3rem);font-weight:700;letter-spacing:.12em;
   background:radial-gradient(circle at 50% 70%, #fff6d8, var(--candle));
   box-shadow:0 0 14px rgba(240,195,107,.9);animation:flick .6s ease-in-out infinite alternate}
 @keyframes flick{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-52%) scale(1.12)}}
-.round-q{font-size:clamp(1.15rem,4vw,1.6rem);line-height:1.5;font-weight:700}
-.round-note{font-size:.85rem;opacity:.7;margin-top:8px}
+.round-q{font-size:clamp(1.15rem,4vw,1.6rem);line-height:1.5;font-weight:700;text-wrap:balance}
+.round-note{font-size:.85rem;opacity:.7;margin-top:8px;text-wrap:pretty}
 .cards{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:720px;margin:26px auto 20px}
 .wcard{
   font-family:'Gowun Batang',serif;font-size:clamp(.95rem,3vw,1.08rem);
@@ -158,7 +159,7 @@ body.kid .wcard{font-size:clamp(1.05rem,3.6vw,1.2rem);padding:15px 24px}
 #pfill{display:block;height:100%;width:0;border-radius:99px;transition:width .7s ease;
   background:linear-gradient(90deg,var(--candle-soft),var(--candle));box-shadow:0 0 12px rgba(240,195,107,.7)}
 #pstat{margin-top:10px;font-size:.86rem;color:var(--candle-soft)}
-.srclist{font-size:.8rem;line-height:1.78;color:#6b5a35;overflow-y:auto;padding-right:6px;text-align:left}
+.srclist{font-size:.8rem;line-height:1.78;color:#6b5a35;overflow-y:auto;padding-right:6px;text-align:left;text-wrap:pretty}
 .srclist b{display:block;color:#4a3617;margin:14px 0 3px;font-size:.86rem}
 .srclist b:first-child{margin-top:0}
 .srcnote{display:block;margin-top:18px;padding-top:14px;border-top:1px dashed #c9b184;font-size:.78rem;color:#8a7350}
@@ -185,12 +186,12 @@ body.kid .wcard{font-size:clamp(1.05rem,3.6vw,1.2rem);padding:15px 24px}
 .art .retry{font:inherit;font-size:.8rem;padding:7px 14px;border-radius:999px;border:1px solid #b9a87f;background:#f2e8cf;cursor:pointer;color:#6b5a35}
 .txt{padding:clamp(20px,3.5vw,46px);overflow-y:auto;display:flex;flex-direction:column;justify-content:center}
 .txt .chap{font-size:.72rem;letter-spacing:.3em;color:#a3865a;margin-bottom:14px}
-.txt .body{font-family:'Gowun Batang',serif;font-size:clamp(1rem,1.7vw,1.13rem);line-height:2.05;white-space:pre-wrap;text-align:left}
+.txt .body{font-family:'Gowun Batang',serif;font-size:clamp(1rem,1.7vw,1.13rem);line-height:2.05;white-space:pre-wrap;text-align:left;text-wrap:pretty}
 body.kid .txt .body{font-size:clamp(1.08rem,2vw,1.25rem);line-height:2.15}
-.txt h2.cover-t{font-size:clamp(1.7rem,3.4vw,2.5rem);line-height:1.5;margin-bottom:16px;color:#4a3617}
+.txt h2.cover-t{font-size:clamp(1.7rem,3.4vw,2.5rem);line-height:1.5;margin-bottom:16px;color:#4a3617;text-wrap:balance}
 .txt .cover-s{font-size:.95rem;color:#8a7350;line-height:1.8}
 .closing-page .txt{align-items:center;text-align:center}
-.rx{margin-top:20px;padding:18px 20px;border:1px dashed #c9b184;border-radius:12px;font-size:.9rem;line-height:1.9;color:#6b5a35;text-align:left}
+.rx{margin-top:20px;padding:18px 20px;border:1px dashed #c9b184;border-radius:12px;font-size:.9rem;line-height:1.9;color:#6b5a35;text-align:left;text-wrap:pretty}
 .nav{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 4px 2px}
 .nav .arrow{font:inherit;width:46px;height:46px;border-radius:50%;cursor:pointer;font-size:1.2rem;
   background:rgba(255,255,255,.08);border:1px solid rgba(247,238,218,.3);color:var(--paper)}
@@ -987,7 +988,7 @@ $('dlBook').onclick=()=>{
 <title>${esc(S.story.title)}</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#efe6d2;font-family:'Gowun Dodum','Apple SD Gothic Neo',sans-serif;color:#3a2f22}
+body{margin:0;background:#efe6d2;font-family:'Gowun Dodum','Apple SD Gothic Neo',sans-serif;color:#3a2f22;word-break:keep-all;overflow-wrap:break-word}
 .ui{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(239,230,210,.95);border-bottom:1px solid #d8c9a8;flex-wrap:wrap}
 .ui h2{font-size:.95rem;margin:0}
 .ui .bts{display:flex;gap:6px;flex-wrap:wrap}
@@ -997,8 +998,8 @@ body{margin:0;background:#efe6d2;font-family:'Gowun Dodum','Apple SD Gothic Neo'
 .pg .im img{width:100%;display:block}
 .tx{padding:28px 32px 38px}
 .ch{font-size:.72rem;letter-spacing:.3em;color:#a3865a;margin-bottom:12px}
-h1{font-size:1.8rem;margin:0 0 10px;line-height:1.5}.s{color:#8a7350;margin:0}
-.b{line-height:2.05;white-space:pre-wrap;font-size:1.05rem;margin:0}.c{text-align:center}
+h1{font-size:1.8rem;margin:0 0 10px;line-height:1.5;text-wrap:balance}.s{color:#8a7350;margin:0}
+.b{line-height:2.05;white-space:pre-wrap;font-size:1.05rem;margin:0;text-wrap:pretty}.c{text-align:center}
 .rx{margin-top:20px;padding:16px 18px;border:1px dashed #c9b184;border-radius:12px;font-size:.88rem;line-height:1.9;color:#6b5a35}
 .srcs{font-size:.82rem;line-height:1.8;color:#6b5a35}
 .srcs b{display:block;color:#4a3617;margin:14px 0 3px}.srcs b:first-child{margin-top:0}
