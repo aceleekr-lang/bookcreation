@@ -202,26 +202,89 @@ async function view(id){
 }
 
 function downloadBook(rec,imgs){
-  const esc2=esc; const CH=['첫 번째 이야기','두 번째 이야기','마지막 이야기']; const A=rec.analysis||{};
-  const pg=(img,chap,inner,cls)=>'<section class="pg '+(cls||'')+'">'+(img?'<div class="im"><img src="'+img+'"></div>':'')+'<div class="tx">'+(chap?'<div class="ch">'+esc2(chap)+'</div>':'')+inner+'</div></section>';
+  const CH=['첫 번째 이야기','두 번째 이야기','마지막 이야기']; const A=rec.analysis||{};
+  const SOURCES=[
+   {t:'감정 단어 고르기 — 정서 원형 모델',d:'고른 감정 단어들을 쾌–불쾌, 각성–이완의 두 축 위에 놓고 지금의 정서 상태를 추정합니다. Russell, J. A. (1980). A circumplex model of affect. Journal of Personality and Social Psychology, 39(6).'},
+   {t:'색 고르기 — 색채 정서 연구',d:'밝은 색은 긍정 정서와, 채도 높은 색은 높은 각성과 이어진다는 실험 결과를 바탕으로, 색 선택을 감정 단어와 교차 확인합니다. Valdez, P., & Mehrabian, A. (1994). Effects of color on emotions. Journal of Experimental Psychology: General, 123(4).'},
+   {t:'형태 고르기 — 곡선 선호 연구와 부바-키키 효과',d:'사람은 곡선 형태를 선호하고 날카로운 형태에서 긴장과 경계를 지각합니다. Bar, M., & Neta, M. (2006). Humans prefer curved visual objects. Psychological Science, 17(8). 소리와 형태의 대응은 Köhler(1929)의 실험을 Ramachandran & Hubbard(2001)가 발전시킨 부바-키키 연구를 참고했습니다.'},
+   {t:'머물고 싶은 자리 — 전망-은신 이론',d:'아늑하게 몸을 숨길 자리(은신)에 끌리면 안전의 욕구가, 탁 트인 자리(전망)에 끌리면 자율과 탐험의 욕구가 크다고 봅니다. Appleton, J. (1975). The Experience of Landscape. Wiley.'},
+   {t:'바람 단어와 대리만족 — 자기결정이론',d:'자율성·유능감·관계성이라는 세 가지 기본 심리 욕구 가운데 결핍된 것을 찾아, 이야기 속 사건으로 상징적으로 채워줍니다. Deci, E. L., & Ryan, R. M. (2000). The "what" and "why" of goal pursuits. Psychological Inquiry, 11(4). 안전의 욕구는 Maslow(1943)의 동기 이론을 함께 참고했습니다.'},
+   {t:'설문 대신 고르게 하기 — 투사적 기법의 전통',d:'"끌리는 것을 고르게 하면 방어 없이 내면이 드러난다"는 원리는 융의 단어연상검사(Jung, 1910)와 동기강화상담에서 쓰는 가치 카드 분류(Miller & Rollnick)의 전통에 기대고 있습니다.'},
+   {t:'소리 고르기 — 음악 정서 연구',d:'느리고 낮은 소리는 이완과, 빠르고 밝은 소리는 높은 각성과 연결된다는 음악 심리학의 연구들을 참고해 그림과 이야기의 온도를 맞춥니다. Juslin, P. N., & Västfjäll, D. (2008). Emotional responses to music. Behavioral and Brain Sciences, 31(5).'},
+   {t:'동화의 3장 구조 — 독서치료(비블리오테라피)',d:'주인공에게 나를 겹쳐 보고(동일시), 이야기 속 사건으로 감정을 흘려보내고(카타르시스), 새로운 눈을 얻는(통찰) 독서치료의 고전적 3단계를 따릅니다. Shrodes, C. (1949). Bibliotherapy: A theoretical and clinical-experimental study. 아이 모드의 동물 주인공은 아동이 동물 캐릭터에 더 쉽게 동일시한다는 아동 독서치료 연구들을 따른 것입니다.'}];
+  const SRC_NOTE='이 앱은 심리 검사나 진단 도구가 아닙니다. 위 연구들에서 영감을 받아, 마음을 어루만지는 이야기를 짓는 창작 도구입니다.';
+  const pg=(img,chap,inner,cls)=>`<section class="pg ${cls||''}">${img?`<div class="im"><img src="${img}" alt=""></div>`:''}<div class="tx">${chap?`<div class="ch">${esc(chap)}</div>`:''}${inner}</div></section>`;
   let pages='';
-  pages+=pg(imgs[0],(rec.name?rec.name+'님':'당신')+'을 위한 동화','<h1>'+esc2(rec.title)+'</h1><p class="s">'+esc2(rec.story.protagonist||'')+'</p>');
-  (rec.story.scenes||[]).forEach((s,i)=>{ pages+=pg(imgs[i+1],CH[i],'<p class="b">'+esc2(s.text).replace(/\n/g,'<br>')+'</p>'); });
-  pages+=pg(null,'이야기를 덮으며','<p class="b c">'+esc2(rec.story.closing||'')+'</p>'+(A.moodKo?'<p class="rx">'+esc2('지어진 이유 — '+A.moodKo+' / '+(A.needKo||'')+' / '+(A.styleKo||''))+'</p>':''),'noimg');
-  const html='<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc2(rec.title)+'</title><style>'
-    +'*{box-sizing:border-box}body{margin:0;background:#efe6d2;font-family:sans-serif;color:#3a2f22;word-break:keep-all;overflow-wrap:break-word}'
-    +'.ui{position:sticky;top:0;display:flex;gap:8px;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(239,230,210,.95);border-bottom:1px solid #d8c9a8}'
-    +'.ui button{font:inherit;font-size:.8rem;padding:7px 12px;border-radius:99px;border:1px solid #c9b184;background:#f7eeda;cursor:pointer}'
-    +'.pg{max-width:680px;margin:26px auto;background:#f7eeda;border-radius:14px;overflow:hidden;box-shadow:0 10px 34px rgba(60,45,20,.18)}'
-    +'.pg .im img{width:100%;display:block}.tx{padding:28px 32px 38px}.ch{font-size:.72rem;letter-spacing:.3em;color:#a3865a;margin-bottom:12px}'
-    +'h1{font-size:1.8rem;margin:0 0 10px;line-height:1.5;text-wrap:balance}.s{color:#8a7350;margin:0}.b{line-height:2.05;white-space:pre-wrap;font-size:1.05rem;margin:0;text-wrap:pretty}.c{text-align:center}'
-    +'.rx{margin-top:18px;padding:14px 16px;border:1px dashed #c9b184;border-radius:12px;font-size:.85rem;line-height:1.8;color:#6b5a35}'
-    +'@media print{.ui{display:none}body{background:#fff}.pg{max-width:100%;margin:0;border-radius:0;box-shadow:none;page-break-after:always}}'
-    +'</style></head><body><header class="ui"><b>'+esc2(rec.title)+'</b><button onclick="window.print()">인쇄</button></header>'
-    +pages+'<\/body><\/html>';
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
-  a.download=(rec.name||'무명')+'_'+rec.title+'_동화책.html'; a.click();
+  pages+=pg(imgs[0],(rec.name?rec.name+'님':'당신')+'을 위한 동화',`<h1>${esc(rec.title)}</h1><p class="s">${esc(rec.story.protagonist||'')}</p>`,'');
+  (rec.story.scenes||[]).forEach((s,i)=>{ pages+=pg(imgs[i+1],CH[i],`<p class="b">${esc(s.text).replace(/\n/g,'<br>')}</p>`,''); });
+  const rx=A.moodKo?`<p class="rx">이 동화가 지어진 이유 — 지금 마음은 ${esc(A.moodKo)}였어요.${A.senseKo?' '+esc(A.senseKo)+'였고,':''} 마음이 가장 바라는 것은 ${esc(A.needKo||'')}이었어요.${A.memoryKo?` 꺼낸 ${esc(A.memoryKo)}은 이야기의 밑색이 되었고, '${esc(A.avoidKo||'')}'은 이야기에 들이지 않았습니다.`:''} 그림은 ${esc(A.styleKo||'')}로 그렸습니다.</p>`:'';
+  pages+=pg(null,'이야기를 덮으며',`<p class="b c">${esc(rec.story.closing||'')}</p>`+rx,'noimg');
+  const srcs=SOURCES.map(s=>`<b>${esc(s.t)}</b><span>${esc(s.d)}</span>`).join('')+`<i class="note">${esc(SRC_NOTE)}</i>`;
+  pages+=pg(null,'이 이야기의 뿌리 — 참고한 연구들',`<div class="srcs">${srcs}</div>`,'noimg');
+  const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(rec.title)}</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#efe6d2;font-family:'Gowun Dodum','Apple SD Gothic Neo',sans-serif;color:#3a2f22;word-break:keep-all;overflow-wrap:break-word}
+.ui{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(239,230,210,.95);border-bottom:1px solid #d8c9a8;flex-wrap:wrap}
+.ui h2{font-size:.95rem;margin:0}
+.ui .bts{display:flex;gap:6px;flex-wrap:wrap}
+.ui button{font:inherit;font-size:.8rem;padding:7px 12px;border-radius:99px;border:1px solid #c9b184;background:#f7eeda;cursor:pointer;color:#5a4a28}
+.ui button.on{background:#e8b64c;border-color:#e8b64c;color:#2e2410}
+.pg{max-width:680px;margin:26px auto;background:#f7eeda;border-radius:14px;overflow:hidden;box-shadow:0 10px 34px rgba(60,45,20,.18)}
+.pg .im img{width:100%;display:block}
+.tx{padding:28px 32px 38px}
+.ch{font-size:.72rem;letter-spacing:.3em;color:#a3865a;margin-bottom:12px}
+h1{font-size:1.8rem;margin:0 0 10px;line-height:1.5;text-wrap:balance}.s{color:#8a7350;margin:0}
+.b{line-height:2.05;white-space:pre-wrap;font-size:1.05rem;margin:0;text-wrap:pretty}.c{text-align:center}
+.rx{margin-top:20px;padding:16px 18px;border:1px dashed #c9b184;border-radius:12px;font-size:.88rem;line-height:1.9;color:#6b5a35;text-wrap:pretty}
+.srcs{font-size:.82rem;line-height:1.8;color:#6b5a35;text-wrap:pretty}
+.srcs b{display:block;color:#4a3617;margin:14px 0 3px}.srcs b:first-child{margin-top:0}
+.srcs .note{display:block;margin-top:16px;padding-top:12px;border-top:1px dashed #c9b184;color:#8a7350;font-style:normal;font-size:.78rem}
+.pgnav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:18px;align-items:center;padding:10px;background:rgba(239,230,210,.95);border-top:1px solid #d8c9a8}
+.pgnav button{font:inherit;width:42px;height:42px;border-radius:50%;border:1px solid #c9b184;background:#f7eeda;cursor:pointer;font-size:1.1rem;color:#5a4a28}
+.pgnav span{font-size:.85rem;color:#8a7350;min-width:64px;text-align:center}
+footer{text-align:center;color:#a3865a;font-size:.78rem;padding:20px 0 76px}
+body.flip .pg{display:none}
+body.flip .pg.cur{display:block}
+body.flip footer{display:none}
+body.scroll .pgnav{display:none}
+@media (min-width:900px){
+ body.flip .pg.cur:not(.noimg){display:grid;grid-template-columns:1fr 1.05fr;max-width:1060px;align-items:stretch}
+ body.flip .pg.cur:not(.noimg) .im{height:min(80vh,780px)}
+ body.flip .pg.cur:not(.noimg) .im img{height:100%;object-fit:cover}
+ body.flip .pg.cur:not(.noimg) .tx{align-self:center}
+}
+@media print{
+ .ui,.pgnav,footer{display:none!important}
+ body{background:#fff}
+ .pg{display:block!important;grid-template-columns:none!important;max-width:100%;margin:0;border-radius:0;box-shadow:none;page-break-after:always}
+ .pg .im{height:auto!important}
+ .pg .im img{width:100%;height:auto!important}
+}
+</style></head>
+<body class="flip">
+<header class="ui"><h2>${esc(rec.title)}</h2>
+<div class="bts"><button id="mFlip" class="on">넘겨보기</button><button id="mScroll">이어보기</button><button id="bPrint">인쇄</button></div></header>
+${pages}
+<footer>이야기의 문에서 지어진 동화</footer>
+<nav class="pgnav"><button id="bPrev">‹</button><span id="pgno"></span><button id="bNext">›</button></nav>
+<script>
+var cur=0,pgs=[].slice.call(document.querySelectorAll('.pg'));
+function g(id){return document.getElementById(id)}
+function go(n){cur=Math.max(0,Math.min(pgs.length-1,n));for(var i=0;i<pgs.length;i++)pgs[i].classList.toggle('cur',i===cur);g('pgno').textContent=(cur+1)+' / '+pgs.length;window.scrollTo(0,0)}
+function mode(m){document.body.className=m;g('mFlip').classList.toggle('on',m==='flip');g('mScroll').classList.toggle('on',m==='scroll');if(m==='flip')go(cur)}
+g('bPrev').onclick=function(){go(cur-1)};g('bNext').onclick=function(){go(cur+1)};
+g('mFlip').onclick=function(){mode('flip')};g('mScroll').onclick=function(){mode('scroll')};
+g('bPrint').onclick=function(){window.print()};
+addEventListener('keydown',function(e){if(document.body.className!=='flip')return;if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1)});
+var tx0=null;addEventListener('touchstart',function(e){tx0=e.touches[0].clientX},{passive:true});
+addEventListener('touchend',function(e){if(tx0===null||document.body.className!=='flip')return;var dx=e.changedTouches[0].clientX-tx0;tx0=null;if(Math.abs(dx)>50)go(cur+(dx<0?1:-1))},{passive:true});
+go(0);
+<\/script></body></html>`;
+  const aTag=document.createElement('a');
+  aTag.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  aTag.download=(rec.name||'무명')+'_'+rec.title+'_동화책.html'; aTag.click();
 }
 
 $('csvBtn').onclick=()=>{
