@@ -1,11 +1,17 @@
 // /api/admin — 관리자 전용: 저장된 동화 목록·상세·삭제 (OWNER_KEY 인증)
-import { kvOn, kvGet, kvDel, kvHgetall, kvHdel } from './_kv.js';
+import { kvOn, kvGet, kvDel, kvHgetall, kvHdel, kvLrange } from './_kv.js';
+import { gateCode, gateSecondsLeft } from './_gate.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const { key, action, id } = req.body || {};
   if (!process.env.OWNER_KEY || key !== process.env.OWNER_KEY) {
     return res.status(403).json({ error: '열쇠가 맞지 않습니다.' });
+  }
+  if (action === 'gate') { // 문의 비밀번호 + 대기 현황 (저장소 없어도 번호는 표시)
+    let queue = 0, active = false;
+    if (kvOn) { try { queue = ((await kvLrange('q', 0, -1)) || []).length; active = !!(await kvGet('active')); } catch (e) {} }
+    return res.status(200).json({ code: gateCode(), left: gateSecondsLeft(), queue, active });
   }
   if (!kvOn) return res.status(500).json({ error: '저장소(Upstash)가 아직 연결되지 않았습니다. README의 저장소 설정을 진행해 주세요.' });
 

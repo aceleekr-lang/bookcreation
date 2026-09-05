@@ -19,28 +19,37 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const ip = (req.headers['x-forwarded-for'] || 'unknown').split(',')[0].trim();
 
-  const { prompt, master, recId, slot } = req.body || {};
+  const { prompt, master, recId, slot, refB64, refMime } = req.body || {};
   if (!prompt) return res.status(400).json({ error: '프롬프트가 없습니다.' });
   const isOwner = !!process.env.OWNER_KEY && master === process.env.OWNER_KEY;
   if (!isOwner && limited(ip)) return res.status(429).json({ error: '오늘 그릴 수 있는 그림을 모두 그렸어요.' });
 
-  async function gen(asJpeg) {
-    const body = { model: 'gpt-image-2', prompt, size: '1024x1536', quality: 'medium', n: 1 };
-    if (asJpeg) { body.output_format = 'jpeg'; body.output_compression = 92; } // 고화질 JPEG — 해상도 동일, 인쇄 체감 차이 없음
-    const r = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer ' + process.env.OPENAI_API_KEY },
-      body: JSON.stringify(body),
-    });
+  async function gen(asJpeg, useRef) {
+    const headers = { authorization: 'Bearer ' + process.env.OPENAI_API_KEY };
+    let r;
+    if (useRef && refB64) { // 표지를 참조 이미지로 넣어 같은 캐릭터로 그리기 (edits API)
+      const fd = new FormData();
+      fd.append('model', 'gpt-image-2'); fd.append('size', '1024x1536'); fd.append('quality', 'medium'); fd.append('n', '1');
+      fd.append('prompt', 'Keep the exact same main character as in the reference image (same species, colors, markings, clothing, proportions), in the same illustration style. New scene: ' + prompt);
+      if (asJpeg) { fd.append('output_format', 'jpeg'); fd.append('output_compression', '92'); }
+      fd.append('image', new Blob([Buffer.from(refB64, 'base64')], { type: refMime || 'image/jpeg' }), 'ref.jpg');
+      r = await fetch('https://api.openai.com/v1/images/edits', { method: 'POST', headers, body: fd });
+    } else {
+      const body = { model: 'gpt-image-2', prompt, size: '1024x1536', quality: 'medium', n: 1 };
+      if (asJpeg) { body.output_format = 'jpeg'; body.output_compression = 92; } // 고화질 JPEG — 해상도 동일
+      r = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    }
     const data = await r.json();
     if (!r.ok) throw new Error(data?.error?.message || 'OpenAI API 오류');
     return { b64: data.data[0].b64_json, mime: asJpeg ? 'image/jpeg' : 'image/png' };
   }
   try {
     let out;
-    try { out = await gen(true); }
-    catch (e) { // 만약의 JPEG 옵션 미지원 시 PNG 원본으로 자동 우회
-      if (/output_format|output_compression|unknown parameter/i.test(e.message)) out = await gen(false);
+    try { out = await gen(true, true); }
+    catch (e) {
+      if (/output_format|output_compression|unknown parameter/i.test(e.message)) out = await gen(false, true);
+      else if (refB64) { console.error('ref edit failed, fallback', e.message); out = await gen(true, false); } // 참조 실패 시 일반 생성
       else throw e;
     }
     let stored = false;

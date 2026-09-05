@@ -21,3 +21,13 @@ export const kvHset = (k, f, v) => call('/hset/' + encodeURIComponent(k) + '/' +
 export const kvHdel = (k, f) => call('/hdel/' + encodeURIComponent(k) + '/' + encodeURIComponent(f));
 export const kvHgetall = (k) => call('/hgetall/' + encodeURIComponent(k));
 export const kvGetrange = (k, s, e) => call('/getrange/' + encodeURIComponent(k) + '/' + s + '/' + e);
+export const kvSetNX = (k, v, ex) => call('/set/' + encodeURIComponent(k) + '/' + encodeURIComponent(v) + '/EX/' + ex + '/NX');
+export const kvExpire = (k, ex) => call('/expire/' + encodeURIComponent(k) + '/' + ex);
+export const kvRpush = (k, v) => call('/rpush/' + encodeURIComponent(k), v);
+export const kvLrange = (k, s, e) => call('/lrange/' + encodeURIComponent(k) + '/' + s + '/' + e);
+export const kvLrem = (k, v) => call('/lrem/' + encodeURIComponent(k) + '/0/' + encodeURIComponent(v));
+export async function kvPipeline(cmds) {
+  const r = await fetch(U + '/pipeline', { method: 'POST',
+    headers: { authorization: 'Bearer ' + T, 'content-type': 'application/json' }, body: JSON.stringify(cmds) });
+  return (await r.json()).map(x => x.result);
+}
