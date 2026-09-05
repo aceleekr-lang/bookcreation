@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     if (useRef && refB64) { // 표지를 참조 이미지로 넣어 같은 캐릭터로 그리기 (edits API)
       const fd = new FormData();
       fd.append('model', 'gpt-image-2'); fd.append('size', '1024x1536'); fd.append('quality', 'medium'); fd.append('n', '1');
-      fd.append('prompt', 'Keep the exact same main character as in the reference image (same species, colors, markings, clothing, proportions), in the same illustration style. New scene: ' + prompt);
+      fd.append('prompt', 'Use the reference image ONLY for the main character\'s appearance (same species, colors, markings, clothing, proportions) and the illustration style. Do NOT reuse the reference\'s setting, pose, camera angle or composition — this is a completely different scene: ' + prompt);
       if (asJpeg) { fd.append('output_format', 'jpeg'); fd.append('output_compression', '92'); }
       fd.append('image', new Blob([Buffer.from(refB64, 'base64')], { type: refMime || 'image/jpeg' }), 'ref.jpg');
       r = await fetch('https://api.openai.com/v1/images/edits', { method: 'POST', headers, body: fd });

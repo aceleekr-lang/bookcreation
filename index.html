@@ -168,7 +168,7 @@ body.kid .wcard{font-size:clamp(1.05rem,3.6vw,1.2rem);padding:15px 24px}
 .dots::after{content:"";animation:dots 1.5s steps(4) infinite}
 @keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
 #loadread{margin-top:14px;font-size:.88rem;opacity:.75;line-height:1.8;max-width:520px}
-.pbar{width:min(72vw,320px);height:9px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:22px}
+.pbar{width:min(72vw,320px);height:11px;border-radius:99px;background:rgba(255,255,255,.16);border:1px solid rgba(247,238,218,.35);overflow:hidden;margin-top:22px;box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
 #pfill{display:block;height:100%;width:0;border-radius:99px;transition:width .7s ease;
   background:linear-gradient(90deg,var(--candle-soft),var(--candle));box-shadow:0 0 12px rgba(240,195,107,.7)}
 #pstat{margin-top:10px;font-size:.86rem;color:var(--candle-soft)}
@@ -867,9 +867,13 @@ const STORYMSGS=['마음의 별자리를 읽는 중','작가 요정이 첫 문�
 const IMGMSGS=['물감을 개는 중','붓끝에 별빛을 묻히는 중','달빛으로 밑그림을 그리는 중','금박을 조심조심 입히는 중','물감이 마르길 기다리는 중','그림 요정이 마지막 손질을 하는 중','액자의 먼지를 닦는 중'];
 let loadTimer=null, msgPool=STORYMSGS;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function setProg(units,stat){
-  $('pfill').style.width=Math.min(100,Math.round(units/6*100))+'%';
-  if(stat) $('pstat').textContent=stat;
+let creepTimer=null, curPct=0, lastStat='';
+function paintProg(){ $('pfill').style.width=curPct+'%'; $('pstat').textContent=lastStat?(lastStat+' · '+curPct+'%'):''; }
+function setProg(units,stat){ // 실제 단계 도달 시 호출 → 이후 다음 단계 상한까지 천천히 차오름
+  clearInterval(creepTimer);
+  curPct=Math.min(100,Math.round(units/6*100)); if(stat) lastStat=stat; paintProg();
+  if(units<6){ const cap=Math.min(97,Math.round((units+0.9)/6*100)); // 다음 단계 직전까지만
+    creepTimer=setInterval(()=>{ if(curPct<cap){ curPct+=1; paintProg(); } else clearInterval(creepTimer); }, units<2?2600:1500); }
 }
 function bumpImg(){ const ok=S.images.filter(Boolean).length;
   setProg(2+ok, `이야기 완성 · 그림 ${ok}/4장 완성`); }
@@ -1079,59 +1083,104 @@ $('viewBtn').onclick=()=>{ const b=$('book'); b.classList.toggle('scroll');
   if(!sc) goPage(S.page,true); };
 $('homeBtn').onclick=()=>{ if(confirm('처음 화면으로 돌아갈까요? 지금 동화는 저장하지 않으면 사라져요.')) location.reload(); };
 
-/* ═══════════ 4×6 인화용 8장 (그림4 + 글4) — 1200×1800px, 300dpi ═══════════ */
-const CW=1200, CH_=1800;
-function wrapLines(ctx,text,maxW){ // 낱말 단위 줄바꿈 (keep-all)
-  const out=[]; for(const para of String(text).split('\n')){ if(!para.trim()){ out.push(''); continue; }
-    let line=''; for(const w of para.split(' ')){ const t=line?line+' '+w:w;
-      if(ctx.measureText(t).width>maxW && line){ out.push(line); line=w; } else line=t; }
-    out.push(line); }
-  return out;
-}
-function drawParagraph(ctx,text,x,y,maxW,size,lh,font,color,align){
-  ctx.font=font.replace('SZ',size+'px'); ctx.fillStyle=color; ctx.textAlign=align||'left';
-  const lines=wrapLines(ctx,text,maxW); lines.forEach((l,i)=>ctx.fillText(l,x,y+i*size*lh)); return lines.length*size*lh;
-}
-// JPEG에 300dpi 표기(JFIF 밀도) 기록 — 인화 업체 속성 확인용
-function setDpi300(buf){
-  const u=new Uint8Array(buf);
-  if(u[0]!==0xFF||u[1]!==0xD8) return buf;
-  if(u[2]===0xFF&&u[3]===0xE0&&u[6]===0x4A&&u[7]===0x46&&u[8]===0x49&&u[9]===0x46){ // APP0 JFIF 있음 → 밀도만 수정
-    u[13]=1; u[14]=(300>>8)&255; u[15]=300&255; u[16]=(300>>8)&255; u[17]=300&255; return u.buffer; }
-  const app0=new Uint8Array([0xFF,0xE0,0,16,0x4A,0x46,0x49,0x46,0,1,1,1,(300>>8)&255,300&255,(300>>8)&255,300&255,0,0]);
+/* ═══════════ 4×6 인화 카드 라이브러리 (index·admin 공용) — 1200×1800px, 300dpi ═══════════ */
+const P46={W:1200,H:1800,M:130};
+function p46_setDpi(buf){ // JPEG 헤더에 300dpi 기록
+  const u=new Uint8Array(buf); if(u[0]!==0xFF||u[1]!==0xD8) return buf;
+  if(u[2]===0xFF&&u[3]===0xE0&&u[6]===0x4A&&u[7]===0x46&&u[8]===0x49&&u[9]===0x46){ u[13]=1; u[14]=1; u[15]=44; u[16]=1; u[17]=44; return u.buffer; }
+  const app0=new Uint8Array([0xFF,0xE0,0,16,0x4A,0x46,0x49,0x46,0,1,1,1,1,44,1,44,0,0]);
   const out=new Uint8Array(u.length+app0.length); out.set(u.subarray(0,2),0); out.set(app0,2); out.set(u.subarray(2),2+app0.length); return out.buffer;
 }
-function cardBase(){ const c=document.createElement('canvas'); c.width=CW; c.height=CH_; const ctx=c.getContext('2d');
-  ctx.fillStyle='#f7eeda'; ctx.fillRect(0,0,CW,CH_);
-  ctx.strokeStyle='rgba(163,134,90,.35)'; ctx.lineWidth=3; ctx.strokeRect(54,54,CW-108,CH_-108); return [c,ctx]; }
-async function textCard(kind,d){
-  await document.fonts.ready;
-  const serif="700 SZ 'Gowun Batang', serif", body="400 SZ 'Gowun Batang', serif", sans="400 SZ 'Gowun Dodum', sans-serif";
-  const [c,ctx]=cardBase(); const M=120, W=CW-M*2; const isKid=S.mode==='kid';
-  if(kind==='title'){
-    ctx.textAlign='center'; ctx.fillStyle='#a3865a'; ctx.font=sans.replace('SZ','30px'); ctx.fillText((S.user.name?S.user.name+'님':'당신')+'을 위한 동화',CW/2,360);
-    ctx.font=serif.replace('SZ','84px'); const tl=wrapLines(ctx,d.title,W); tl.forEach((l,i)=>{ ctx.fillStyle='#4a3617'; ctx.fillText(l,CW/2,560+i*118); });
-    let y=560+tl.length*118+70; ctx.fillStyle='#8a7350'; ctx.font=body.replace('SZ','40px');
-    wrapLines(ctx,d.protagonist||'',W).forEach((l,i)=>ctx.fillText(l,CW/2,y+i*68));
-    ctx.font=sans.replace('SZ','26px'); ctx.fillStyle='#a3865a'; ctx.fillText('이야기의 문',CW/2,CH_-150);
-  } else {
-    ctx.textAlign='left'; ctx.fillStyle='#a3865a'; ctx.font=sans.replace('SZ','28px'); ctx.fillText(d.chap,M,200);
-    ctx.fillStyle='#c9b184'; ctx.fillRect(M,222,60,3);
-    let size=isKid?52:46, lh=1.85; const bottom=CH_-170;
-    // 본문 + (마지막 장) 맺음말이 카드에 들어갈 때까지 글자 크기 축소
-    for(;;){ ctx.font=body.replace('SZ',size+'px'); const bl=wrapLines(ctx,d.text,W);
-      let hh=bl.length*size*lh; if(d.closing){ ctx.font=body.replace('SZ',Math.round(size*.82)+'px'); hh+=90+wrapLines(ctx,d.closing,W).length*size*.82*lh; }
-      if(hh<=bottom-300 || size<=30) break; size-=2; }
-    let y=300; y+=drawParagraph(ctx,d.text,M,y,W,size,lh,body,'#3a2f22','left');
-    if(d.closing){ y+=40; ctx.strokeStyle='#c9b184'; ctx.setLineDash([8,10]); ctx.beginPath(); ctx.moveTo(M,y); ctx.lineTo(CW-M,y); ctx.stroke(); ctx.setLineDash([]);
-      y+=70; drawParagraph(ctx,d.closing,CW/2,y,W,Math.round(size*.82),lh,body,'#6b5a35','center'); }
-  }
-  return new Promise(r=>c.toBlob(b=>b.arrayBuffer().then(x=>r(setDpi300(x))),'image/jpeg',.93));
+function p46_wrapPara(ctx,para,maxW){ // 낱말 단위 줄바꿈
+  const out=[]; let line='';
+  for(const w of para.split(' ')){ if(!w) continue; const t=line?line+' '+w:w;
+    if(ctx.measureText(t).width>maxW && line){ out.push(line); line=w; } else line=t; }
+  if(line) out.push(line); return out;
 }
-function imageCard(dataUrl){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>{ const c=document.createElement('canvas'); c.width=CW; c.height=CH_;
-  const ctx=c.getContext('2d'); ctx.drawImage(im,0,0,CW,CH_); c.toBlob(b=>b.arrayBuffer().then(x=>res(setDpi300(x))),'image/jpeg',.93); }; im.onerror=rej; im.src=dataUrl; }); }
-// 압축 없는 ZIP 생성 (외부 라이브러리 불필요)
-function makeZip(files){
+function p46_balance(ctx,lines,maxW){ // 마지막 줄에 한두 글자만 남지 않게 앞줄 낱말을 끌어내림
+  for(let g=0;g<8 && lines.length>=2;g++){
+    const last=lines[lines.length-1], prev=lines[lines.length-2];
+    const short = last.replace(/\s/g,'').length<=3 || ctx.measureText(last).width<maxW*.24;
+    if(!short) break;
+    const pw=prev.split(' '); if(pw.length<2) break;
+    const moved=pw.pop(), cand=moved+' '+last;
+    if(ctx.measureText(cand).width>maxW) break;
+    lines[lines.length-2]=pw.join(' '); lines[lines.length-1]=cand;
+  }
+  return lines;
+}
+function p46_layout(ctx,text,maxW){ // 문단별 줄 배열 [[...],[...]]
+  return String(text||'').split('\n').map(p=>p.trim()).filter(Boolean).map(p=>p46_balance(ctx,p46_wrapPara(ctx,p,maxW),maxW));
+}
+function p46_base(){
+  const c=document.createElement('canvas'); c.width=P46.W; c.height=P46.H; const ctx=c.getContext('2d');
+  ctx.fillStyle='#f8f0dd'; ctx.fillRect(0,0,P46.W,P46.H);
+  const g=ctx.createRadialGradient(P46.W/2,P46.H/2,300,P46.W/2,P46.H/2,1300); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(120,90,40,.10)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,P46.W,P46.H);
+  ctx.strokeStyle='rgba(163,134,90,.6)'; ctx.lineWidth=3; ctx.strokeRect(58,58,P46.W-116,P46.H-116);
+  ctx.strokeStyle='rgba(163,134,90,.38)'; ctx.lineWidth=1.5; ctx.strokeRect(74,74,P46.W-148,P46.H-148);
+  return [c,ctx];
+}
+function p46_ornament(ctx,cx,y,label){ // ─── ✦ 라벨 ✦ ───
+  ctx.save(); ctx.textAlign='center'; ctx.fillStyle='#a3865a'; ctx.font="400 30px 'Gowun Dodum', sans-serif";
+  try{ ctx.letterSpacing='8px'; }catch(e){}
+  const w=ctx.measureText(label).width; ctx.fillText(label,cx,y);
+  ctx.strokeStyle='rgba(163,134,90,.55)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(cx-w/2-120,y-10); ctx.lineTo(cx-w/2-28,y-10); ctx.moveTo(cx+w/2+28,y-10); ctx.lineTo(cx+w/2+120,y-10); ctx.stroke();
+  ctx.font="400 22px 'Gowun Dodum', sans-serif"; try{ ctx.letterSpacing='0px'; }catch(e){}
+  ctx.fillText('✦',cx-w/2-140,y-2); ctx.fillText('✦',cx+w/2+140,y-2); ctx.restore();
+}
+function p46_toJpeg(c){ return new Promise(r=>c.toBlob(b=>b.arrayBuffer().then(x=>r(p46_setDpi(x))),'image/jpeg',.93)); }
+function p46_loadImg(src){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; }); }
+
+async function p46_cover({img,name,title,protagonist}){ // 표지: 그림 위에 제목 오버레이
+  await document.fonts.ready;
+  const c=document.createElement('canvas'); c.width=P46.W; c.height=P46.H; const ctx=c.getContext('2d');
+  ctx.drawImage(await p46_loadImg(img),0,0,P46.W,P46.H);
+  let g=ctx.createLinearGradient(0,0,0,P46.H*.42); g.addColorStop(0,'rgba(12,16,40,.72)'); g.addColorStop(1,'rgba(12,16,40,0)'); ctx.fillStyle=g; ctx.fillRect(0,0,P46.W,P46.H*.42);
+  g=ctx.createLinearGradient(0,P46.H*.74,0,P46.H); g.addColorStop(0,'rgba(12,16,40,0)'); g.addColorStop(1,'rgba(12,16,40,.7)'); ctx.fillStyle=g; ctx.fillRect(0,P46.H*.74,P46.W,P46.H*.26);
+  ctx.textAlign='center'; ctx.shadowColor='rgba(0,0,0,.55)'; ctx.shadowBlur=18; ctx.shadowOffsetY=3;
+  ctx.fillStyle='#f8dfa8'; ctx.font="400 32px 'Gowun Dodum', sans-serif"; try{ ctx.letterSpacing='10px'; }catch(e){}
+  ctx.fillText((name?name+'님':'당신')+'을 위한 동화',P46.W/2,190); try{ ctx.letterSpacing='0px'; }catch(e){}
+  ctx.fillStyle='#fff8e8'; let size=96; let lines;
+  do{ ctx.font=`700 ${size}px 'Gowun Batang', serif`; lines=p46_balance(ctx,p46_wrapPara(ctx,title,P46.W-240),P46.W-240); if(lines.length<=3) break; size-=8; }while(size>60);
+  lines.forEach((l,i)=>ctx.fillText(l,P46.W/2,300+i*size*1.25));
+  if(protagonist){ ctx.fillStyle='#f5ead2'; ctx.font="400 36px 'Gowun Batang', serif";
+    const pl=p46_balance(ctx,p46_wrapPara(ctx,protagonist,P46.W-260),P46.W-260); const y0=P46.H-120-(pl.length-1)*58;
+    pl.forEach((l,i)=>ctx.fillText(l,P46.W/2,y0+i*58)); }
+  return p46_toJpeg(c);
+}
+async function p46_image(img){ const c=document.createElement('canvas'); c.width=P46.W; c.height=P46.H;
+  c.getContext('2d').drawImage(await p46_loadImg(img),0,0,P46.W,P46.H); return p46_toJpeg(c); }
+async function p46_text({label,text,pageNo,isKid,center,footer,sub,copyright}){ // 글 카드: 최대 글자 크기 자동, 고아 방지, 동화책 레이아웃
+  await document.fonts.ready;
+  const [c,ctx]=p46_base(); const M=P46.M, maxW=P46.W-M*2, top=400, bottom=P46.H-230, lh=1.92;
+  p46_ornament(ctx,P46.W/2,270,label);
+  let size=isKid?66:58, paras, subParas=[], subSize=0;
+  const subLh=1.75;
+  const subH=()=> subParas.length ? subSize*2.2 + subParas.reduce((s,p)=>s+p.length*subSize*subLh,0) : 0;
+  for(;;){ ctx.font=`400 ${size}px 'Gowun Batang', serif`; paras=p46_layout(ctx,text,maxW);
+    if(sub){ subSize=Math.max(26,Math.round(size*.56)); ctx.font=`400 ${subSize}px 'Gowun Dodum', sans-serif`; subParas=p46_layout(ctx,sub,maxW); }
+    const hh=paras.reduce((s,p)=>s+p.length*size*lh,0)+(paras.length-1)*size*.7 + subH();
+    if(hh<=bottom-top || size<=34) break; size-=2; }
+  ctx.fillStyle='#3a2f22'; ctx.textAlign=center?'center':'left';
+  const total=paras.reduce((s,p)=>s+p.length*size*lh,0)+(paras.length-1)*size*.7 + subH();
+  let y = top+((bottom-top)-total)/2+size*.8; // 세로 가운데 (장면 글도 그림책처럼)
+  ctx.font=`400 ${size}px 'Gowun Batang', serif`;
+  for(const p of paras){ for(const l of p){ ctx.fillText(l, center?P46.W/2:M, y); y+=size*lh; } y+=size*.7; }
+  if(subParas.length){ // 작은 해설 문단 (점선 아래)
+    y+=subSize*.3; ctx.strokeStyle='rgba(163,134,90,.6)'; ctx.setLineDash([8,10]); ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(M,y); ctx.lineTo(P46.W-M,y); ctx.stroke(); ctx.setLineDash([]);
+    y+=subSize*1.7; ctx.font=`400 ${subSize}px 'Gowun Dodum', sans-serif`; ctx.fillStyle='#6b5a35'; ctx.textAlign='left';
+    for(const p of subParas){ for(const l of p){ ctx.fillText(l,M,y); y+=subSize*subLh; } }
+  }
+  ctx.textAlign='center'; ctx.fillStyle='#a3865a'; ctx.font="400 28px 'Gowun Dodum', sans-serif";
+  if(pageNo) ctx.fillText('— '+pageNo+' —',P46.W/2,P46.H-135);
+  if(footer) ctx.fillText(footer,P46.W/2,P46.H-135);
+  if(copyright){ ctx.textAlign='right'; ctx.font="400 22px 'Gowun Dodum', sans-serif"; ctx.fillStyle='rgba(163,134,90,.9)'; ctx.fillText(copyright,P46.W-92,P46.H-92); }
+  return p46_toJpeg(c);
+}
+function p46_zip(files){ // 압축 없는 ZIP (라이브러리 불필요)
   const tbl=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
   const crc=(u8)=>{ let c=0xFFFFFFFF; for(let i=0;i<u8.length;i++) c=tbl[(c^u8[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; };
   const enc=new TextEncoder(); const parts=[], central=[]; let off=0;
@@ -1145,21 +1194,29 @@ function makeZip(files){
   const end=new Uint8Array([0x50,0x4b,5,6,0,0,0,0,...u16(files.length),...u16(files.length),...u32(cdLen),...u32(off),0,0]);
   return new Blob([...parts,...central,end],{type:'application/zip'});
 }
+function p46_rx(A){ if(!A||!A.moodKo) return ''; // 앱 처방 문단과 동일
+  return `이 동화가 지어진 이유 — 지금 마음은 ${A.moodKo}였어요.${A.senseKo?' '+A.senseKo+'였고,':''} 마음이 가장 바라는 것은 ${A.needKo||''}이었어요.${A.memoryKo?` 꺼낸 ${A.memoryKo}은 이야기의 밑색이 되었고, '${A.avoidKo||''}'은 이야기에 들이지 않았습니다.`:''} 고른 단어들은 그대로 쓰지 않고 같은 마음결의 다른 이야기로 바꾸어 지었으며, 그림은 ${A.styleKo||''}로 그렸습니다.`; }
+const P46_COPYRIGHT='© '+new Date().getFullYear()+' Gagok Wonryu'; // 영문 표기는 여기서 수정
+async function build46Zip({name,isKid,story,images,analysis}){ // 8장: 표지 / 그림1 글1 / 그림2 글2 / 그림3 글3 / 이야기를 덮으며
+  const CH=['첫 번째 이야기','두 번째 이야기','마지막 이야기']; const files=[];
+  files.push({name:'01_표지.jpg',data:await p46_cover({img:images[0],name,title:story.title,protagonist:story.protagonist})});
+  for(let i=0;i<3;i++){
+    files.push({name:`0${i*2+2}_그림${i+1}.jpg`,data:await p46_image(images[i+1])});
+    files.push({name:`0${i*2+3}_글${i+1}.jpg`,data:await p46_text({label:CH[i],text:story.scenes[i].text,pageNo:i+1,isKid})});
+  }
+  files.push({name:'08_이야기를_덮으며.jpg',data:await p46_text({label:'이야기를 덮으며',text:story.closing||'',isKid,center:true,sub:p46_rx(analysis),
+    footer:'이야기의 문 · '+(name?name+'님':'당신')+'을 위한 동화',copyright:P46_COPYRIGHT})});
+  return p46_zip(files);
+}
+function p46_filename(seq,name,title){ const safe=t=>String(t||'').replace(/[\\/:*?"<>|]/g,'').trim();
+  return `${String(seq||0).padStart(2,'0')}_${safe(name)||'무명'}_${safe(title)}.zip`; }
 $('dl46').onclick=async()=>{
   if(!S.story) return;
   if(S.images.some(x=>!x)){ alert('그림 4장이 모두 준비된 뒤에 저장할 수 있어요.'); return; }
   const btn=$('dl46'); btn.disabled=true; btn.textContent='만드는 중…';
-  try{
-    const sc=S.story.scenes; const files=[];
-    files.push({name:'01_그림_표지.jpg',data:await imageCard(S.images[0])});
-    files.push({name:'02_글_제목.jpg',data:await textCard('title',{title:S.story.title,protagonist:S.story.protagonist})});
-    for(let i=0;i<3;i++){
-      files.push({name:`${String(i*2+3).padStart(2,'0')}_그림_${i+1}장.jpg`,data:await imageCard(S.images[i+1])});
-      files.push({name:`${String(i*2+4).padStart(2,'0')}_글_${i+1}장.jpg`,data:await textCard('scene',{chap:CHAPS[i],text:sc[i].text,closing:i===2?S.story.closing:null})});
-    }
-    const safe=t=>String(t||'').replace(/[\\/:*?"<>|]/g,'').trim();
-    dl(`${String(S.seq||0).padStart(2,'0')}_${safe(S.user.name)||'무명'}_${safe(S.story.title)}.zip`,URL.createObjectURL(makeZip(files)));
-  }catch(e){ alert('인화용 파일을 만들지 못했어요: '+e.message); }
+  try{ const blob=await build46Zip({name:S.user.name,isKid:S.mode==='kid',story:S.story,images:S.images,analysis:S.analysis});
+    dl(p46_filename(S.seq,S.user.name,S.story.title),URL.createObjectURL(blob)); }
+  catch(e){ alert('인화용 파일을 만들지 못했어요: '+e.message); }
   btn.disabled=false; btn.textContent='인화용 8장 ZIP';
 };
 
