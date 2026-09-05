@@ -1,7 +1,7 @@
 // /api/queue — 문의 비밀번호 확인 + 한 번에 한 사람씩 진행하는 대기열
 import { kvOn, kvGet, kvDel, kvSet, kvSetNX, kvExpire, kvRpush, kvLrange, kvLrem, kvPipeline } from './_kv.js';
 import { gateValid } from './_gate.js';
-const ACTIVE_TTL = 90; // 진행자가 30초마다 ping — 끊기면 90초 뒤 자동 해제
+const ACTIVE_TTL = 180; // 진행자가 30초마다 ping — 끊기면 3분 뒤 자동 해제 (다른 앱 다녀와도 유지)
 const WAIT_TTL = 40;   // 대기자가 4초마다 상태 확인 — 떠나면 40초 뒤 대기열에서 제거
 
 export default async function handler(req, res) {

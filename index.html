@@ -333,6 +333,7 @@ body.kid .txt .body{font-size:clamp(1.08rem,2vw,1.25rem);line-height:2.15}
       <button class="bt" id="dlTxt">글 저장</button>
       <button class="bt" id="dlImg">이 그림 저장</button>
       <button class="bt" id="dlBook">동화책 저장</button>
+      <button class="bt" id="dl46" style="display:none;border-color:var(--candle);color:var(--candle-soft)">인화용 8장 ZIP</button>
     </div>
   </div>
   <div class="book" id="book">
@@ -627,8 +628,14 @@ function lifeCount(){ const a=parseInt(store.get('sd_life')||'0')||0;
   return Math.max(a,b); }
 function lifeUp(){ const n=lifeCount()+1; store.set('sd_life',String(n));
   try{ document.cookie='sdlc='+n+'; max-age=315360000; path=/; SameSite=Lax'; }catch(e){} }
-function lifeLocked(){ return !MASTER && lifeCount()>=2; }
+function lifeLocked(){ return false; } // 횟수 잠금 없음 — 참여 통제는 문의 비밀번호가 담당
 
+/* ═══════════ 4×6 인화 버전 (주소 /46 또는 ?p=46) ═══════════ */
+const PRINT46 = /^\/46\/?$/.test(location.pathname) || /(^|[?&])p=46(&|$)/.test(location.search);
+if(PRINT46){ document.addEventListener('DOMContentLoaded',()=>{
+  const t=document.querySelector('#scr-enter .eyebrow'); if(t) t.textContent='4×6 인화지 그림책 버전 · 마음을 읽어주는 나만의 치유동화';
+  const b=document.getElementById('dl46'); if(b) b.style.display='';
+}); }
 const EMPTY_PICKS=()=>({colors:[],shape:[],style:[],detail:[],abstract:[],space:[],sound:[],weather:[],emotions:[],memories:[],desires:[],avoids:[],metaphors:[]});
 const S={mode:null, round:0, picks:EMPTY_PICKS(), timing:{}, roundStart:0, user:{name:'',contact:''}, story:null, images:[null,null,null,null], analysis:null, page:0};
 const $=id=>document.getElementById(id);
@@ -851,8 +858,8 @@ async function pollQueue(){
   await tick(); qPoll=setInterval(tick,4000);
 }
 function heartbeat(on){ clearInterval(hb); if(on) hb=setInterval(()=>qapi({action:'ping',ticket:S.ticket}).catch(()=>{}),30000); }
-function queueDone(){ heartbeat(false); if(S.ticket) qapi({action:'done',ticket:S.ticket}).catch(()=>{}); }
-addEventListener('pagehide',()=>{ if(S.ticket && navigator.sendBeacon)
+function queueDone(){ heartbeat(false); S.generating=false; if(S.ticket) qapi({action:'done',ticket:S.ticket}).catch(()=>{}); }
+addEventListener('pagehide',()=>{ if(S.ticket && !S.generating && navigator.sendBeacon)
   navigator.sendBeacon('/api/queue',new Blob([JSON.stringify({action:'done',ticket:S.ticket})],{type:'application/json'})); });
 
 /* ═══════════ 생성 (Claude → gpt-image-2) — 글과 그림이 다 완성된 뒤 책이 열립니다 ═══════════ */
@@ -867,28 +874,27 @@ function setProg(units,stat){
 function bumpImg(){ const ok=S.images.filter(Boolean).length;
   setProg(2+ok, `이야기 완성 · 그림 ${ok}/4장 완성`); }
 async function startCreate(){
-  show('scr-loading'); $('loaderr').style.display='none'; Snd.door(); heartbeat(true);
+  show('scr-loading'); $('loaderr').style.display='none'; Snd.door(); heartbeat(true); S.generating=true;
   const A=S.analysis;
   $('loadread').textContent=`읽어낸 마음 — ${A.moodKo}. ${A.senseKo}. 마음이 바라는 것은 ‘${A.needKo}’. 그림은 ${A.styleKo}로 그립니다.`;
   msgPool=STORYMSGS; let mi=0; $('loadmsg').textContent=msgPool[0];
   clearInterval(loadTimer); loadTimer=setInterval(()=>{ mi=(mi+1)%msgPool.length; $('loadmsg').textContent=msgPool[mi]; },3200);
   const post=async(body)=>{ const r=await fetch('/api/story',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
     const d=await r.json(); if(!r.ok) throw new Error(d.error||'오류'); return d; };
-  const base={mode:S.mode,master:MASTER,user:S.user,ticket:S.ticket,
+  const base={mode:S.mode,master:MASTER,user:S.user,ticket:S.ticket,layout:PRINT46?'print46':'web',
     analysis:{moodKo:A.moodKo,needKo:A.needKo,styleKo:A.styleKo,senseKo:A.senseKo,memoryKo:A.memoryKo,avoidKo:A.avoidKo,implicitKo:A.implicitKo}};
   try{
     if(!S.story){
       if(S.draft){ // 초고는 있고 퇴고만 남은 경우 → 퇴고부터 이어서
         setProg(1,'퇴고를 이어서 진행해요');
         const d=await post(Object.assign({edit:true,draft:S.draft,picks:S.picks},base));
-        S.story=d.story; S.recId=d.recId||null; S.draft=null;
+        S.story=d.story; S.recId=d.recId||null; S.seq=d.seq||null; S.draft=null;
       } else {
         setProg(0,'이야기를 짓기 시작했어요');
         const d=await post(Object.assign({picks:S.picks},base));
-        if(!MASTER) lifeUp();
         if(d.edited===false){ S.draft=d.story;
           throw new Error('이야기는 지어졌지만 퇴고 단계에서 잠시 멈췄어요. 계속하기를 누르면 퇴고부터 이어서 진행합니다.'); }
-        S.story=d.story; S.recId=d.recId||null;
+        S.story=d.story; S.recId=d.recId||null; S.seq=d.seq||null;
       }
       S.images=[null,null,null,null]; S.page=0; buildBook();
     }
@@ -907,8 +913,10 @@ async function startCreate(){
     $('loadmsg').textContent='잠시 멈췄어요';
     const eb=$('loaderr'); eb.style.display='block'; eb.innerHTML='';
     eb.appendChild(document.createTextNode(e.message)); eb.appendChild(document.createElement('br'));
+    const lostTurn=/차례/.test(e.message);
+    if(lostTurn) eb.appendChild(document.createTextNode('자리를 오래 비워 순서가 풀렸어요. 계속하기를 누르면 다시 순서를 받아요.'));
     const rb=document.createElement('button'); rb.className='btn'; rb.style.marginTop='12px'; rb.textContent='계속하기';
-    rb.onclick=startCreate; eb.appendChild(rb);
+    rb.onclick=lostTurn ? ()=>{ S.ticket=null; openGate(); } : startCreate; eb.appendChild(rb);
     const hb2=document.createElement('button'); hb2.className='btn ghost'; hb2.style.margin='12px 0 0 8px'; hb2.textContent='처음으로';
     hb2.onclick=()=>{ queueDone(); location.reload(); }; eb.appendChild(hb2);
   }
@@ -1070,6 +1078,90 @@ $('viewBtn').onclick=()=>{ const b=$('book'); b.classList.toggle('scroll');
   const sc=b.classList.contains('scroll'); $('viewBtn').textContent=sc?'▤ 넘겨보기':'≡ 이어보기';
   if(!sc) goPage(S.page,true); };
 $('homeBtn').onclick=()=>{ if(confirm('처음 화면으로 돌아갈까요? 지금 동화는 저장하지 않으면 사라져요.')) location.reload(); };
+
+/* ═══════════ 4×6 인화용 8장 (그림4 + 글4) — 1200×1800px, 300dpi ═══════════ */
+const CW=1200, CH_=1800;
+function wrapLines(ctx,text,maxW){ // 낱말 단위 줄바꿈 (keep-all)
+  const out=[]; for(const para of String(text).split('\n')){ if(!para.trim()){ out.push(''); continue; }
+    let line=''; for(const w of para.split(' ')){ const t=line?line+' '+w:w;
+      if(ctx.measureText(t).width>maxW && line){ out.push(line); line=w; } else line=t; }
+    out.push(line); }
+  return out;
+}
+function drawParagraph(ctx,text,x,y,maxW,size,lh,font,color,align){
+  ctx.font=font.replace('SZ',size+'px'); ctx.fillStyle=color; ctx.textAlign=align||'left';
+  const lines=wrapLines(ctx,text,maxW); lines.forEach((l,i)=>ctx.fillText(l,x,y+i*size*lh)); return lines.length*size*lh;
+}
+// JPEG에 300dpi 표기(JFIF 밀도) 기록 — 인화 업체 속성 확인용
+function setDpi300(buf){
+  const u=new Uint8Array(buf);
+  if(u[0]!==0xFF||u[1]!==0xD8) return buf;
+  if(u[2]===0xFF&&u[3]===0xE0&&u[6]===0x4A&&u[7]===0x46&&u[8]===0x49&&u[9]===0x46){ // APP0 JFIF 있음 → 밀도만 수정
+    u[13]=1; u[14]=(300>>8)&255; u[15]=300&255; u[16]=(300>>8)&255; u[17]=300&255; return u.buffer; }
+  const app0=new Uint8Array([0xFF,0xE0,0,16,0x4A,0x46,0x49,0x46,0,1,1,1,(300>>8)&255,300&255,(300>>8)&255,300&255,0,0]);
+  const out=new Uint8Array(u.length+app0.length); out.set(u.subarray(0,2),0); out.set(app0,2); out.set(u.subarray(2),2+app0.length); return out.buffer;
+}
+function cardBase(){ const c=document.createElement('canvas'); c.width=CW; c.height=CH_; const ctx=c.getContext('2d');
+  ctx.fillStyle='#f7eeda'; ctx.fillRect(0,0,CW,CH_);
+  ctx.strokeStyle='rgba(163,134,90,.35)'; ctx.lineWidth=3; ctx.strokeRect(54,54,CW-108,CH_-108); return [c,ctx]; }
+async function textCard(kind,d){
+  await document.fonts.ready;
+  const serif="700 SZ 'Gowun Batang', serif", body="400 SZ 'Gowun Batang', serif", sans="400 SZ 'Gowun Dodum', sans-serif";
+  const [c,ctx]=cardBase(); const M=120, W=CW-M*2; const isKid=S.mode==='kid';
+  if(kind==='title'){
+    ctx.textAlign='center'; ctx.fillStyle='#a3865a'; ctx.font=sans.replace('SZ','30px'); ctx.fillText((S.user.name?S.user.name+'님':'당신')+'을 위한 동화',CW/2,360);
+    ctx.font=serif.replace('SZ','84px'); const tl=wrapLines(ctx,d.title,W); tl.forEach((l,i)=>{ ctx.fillStyle='#4a3617'; ctx.fillText(l,CW/2,560+i*118); });
+    let y=560+tl.length*118+70; ctx.fillStyle='#8a7350'; ctx.font=body.replace('SZ','40px');
+    wrapLines(ctx,d.protagonist||'',W).forEach((l,i)=>ctx.fillText(l,CW/2,y+i*68));
+    ctx.font=sans.replace('SZ','26px'); ctx.fillStyle='#a3865a'; ctx.fillText('이야기의 문',CW/2,CH_-150);
+  } else {
+    ctx.textAlign='left'; ctx.fillStyle='#a3865a'; ctx.font=sans.replace('SZ','28px'); ctx.fillText(d.chap,M,200);
+    ctx.fillStyle='#c9b184'; ctx.fillRect(M,222,60,3);
+    let size=isKid?52:46, lh=1.85; const bottom=CH_-170;
+    // 본문 + (마지막 장) 맺음말이 카드에 들어갈 때까지 글자 크기 축소
+    for(;;){ ctx.font=body.replace('SZ',size+'px'); const bl=wrapLines(ctx,d.text,W);
+      let hh=bl.length*size*lh; if(d.closing){ ctx.font=body.replace('SZ',Math.round(size*.82)+'px'); hh+=90+wrapLines(ctx,d.closing,W).length*size*.82*lh; }
+      if(hh<=bottom-300 || size<=30) break; size-=2; }
+    let y=300; y+=drawParagraph(ctx,d.text,M,y,W,size,lh,body,'#3a2f22','left');
+    if(d.closing){ y+=40; ctx.strokeStyle='#c9b184'; ctx.setLineDash([8,10]); ctx.beginPath(); ctx.moveTo(M,y); ctx.lineTo(CW-M,y); ctx.stroke(); ctx.setLineDash([]);
+      y+=70; drawParagraph(ctx,d.closing,CW/2,y,W,Math.round(size*.82),lh,body,'#6b5a35','center'); }
+  }
+  return new Promise(r=>c.toBlob(b=>b.arrayBuffer().then(x=>r(setDpi300(x))),'image/jpeg',.93));
+}
+function imageCard(dataUrl){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>{ const c=document.createElement('canvas'); c.width=CW; c.height=CH_;
+  const ctx=c.getContext('2d'); ctx.drawImage(im,0,0,CW,CH_); c.toBlob(b=>b.arrayBuffer().then(x=>res(setDpi300(x))),'image/jpeg',.93); }; im.onerror=rej; im.src=dataUrl; }); }
+// 압축 없는 ZIP 생성 (외부 라이브러리 불필요)
+function makeZip(files){
+  const tbl=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
+  const crc=(u8)=>{ let c=0xFFFFFFFF; for(let i=0;i<u8.length;i++) c=tbl[(c^u8[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; };
+  const enc=new TextEncoder(); const parts=[], central=[]; let off=0;
+  const u16=n=>[n&255,(n>>8)&255], u32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>>24)&255];
+  for(const f of files){ const name=enc.encode(f.name), data=new Uint8Array(f.data), cr=crc(data);
+    const head=new Uint8Array([0x50,0x4b,3,4,20,0,...u16(0x800),0,0,0,0,0,0,...u32(cr),...u32(data.length),...u32(data.length),...u16(name.length),0,0,...name]);
+    parts.push(head,data);
+    central.push(new Uint8Array([0x50,0x4b,1,2,20,0,20,0,...u16(0x800),0,0,0,0,0,0,...u32(cr),...u32(data.length),...u32(data.length),...u16(name.length),0,0,0,0,0,0,0,0,0,0,0,0,...u32(off),...name]));
+    off+=head.length+data.length; }
+  const cdLen=central.reduce((s,c)=>s+c.length,0);
+  const end=new Uint8Array([0x50,0x4b,5,6,0,0,0,0,...u16(files.length),...u16(files.length),...u32(cdLen),...u32(off),0,0]);
+  return new Blob([...parts,...central,end],{type:'application/zip'});
+}
+$('dl46').onclick=async()=>{
+  if(!S.story) return;
+  if(S.images.some(x=>!x)){ alert('그림 4장이 모두 준비된 뒤에 저장할 수 있어요.'); return; }
+  const btn=$('dl46'); btn.disabled=true; btn.textContent='만드는 중…';
+  try{
+    const sc=S.story.scenes; const files=[];
+    files.push({name:'01_그림_표지.jpg',data:await imageCard(S.images[0])});
+    files.push({name:'02_글_제목.jpg',data:await textCard('title',{title:S.story.title,protagonist:S.story.protagonist})});
+    for(let i=0;i<3;i++){
+      files.push({name:`${String(i*2+3).padStart(2,'0')}_그림_${i+1}장.jpg`,data:await imageCard(S.images[i+1])});
+      files.push({name:`${String(i*2+4).padStart(2,'0')}_글_${i+1}장.jpg`,data:await textCard('scene',{chap:CHAPS[i],text:sc[i].text,closing:i===2?S.story.closing:null})});
+    }
+    const safe=t=>String(t||'').replace(/[\\/:*?"<>|]/g,'').trim();
+    dl(`${String(S.seq||0).padStart(2,'0')}_${safe(S.user.name)||'무명'}_${safe(S.story.title)}.zip`,URL.createObjectURL(makeZip(files)));
+  }catch(e){ alert('인화용 파일을 만들지 못했어요: '+e.message); }
+  btn.disabled=false; btn.textContent='인화용 8장 ZIP';
+};
 
 /* ═══════════ 다운로드 ═══════════ */
 function dl(name,href){ const a=document.createElement('a'); a.href=href; a.download=name; document.body.appendChild(a); a.click(); a.remove(); }

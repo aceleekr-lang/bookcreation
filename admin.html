@@ -84,6 +84,7 @@ td .mini{font:inherit;font-size:.78rem;padding:6px 10px;margin-right:4px}
     <p id="stat"></p>
     <table>
       <thead><tr>
+        <th title="그날의 순번 (매일 리셋)">#</th>
         <th data-k="ts">시간 <span class="arr"></span></th>
         <th data-k="name">이름 <span class="arr"></span></th>
         <th data-k="contact">연락처</th>
@@ -160,7 +161,7 @@ function render(){
   $('empty').style.display=list.length?'none':'block';
   list.forEach(it=>{
     const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+fmt(it.ts)+'</td><td>'+esc(it.name)+'</td><td>'+esc(it.contact)+'</td><td>'+esc(it.mode)+'</td><td>'+esc(it.title)+'</td>'
+    tr.innerHTML='<td>'+(it.seq||'')+'</td><td>'+fmt(it.ts)+'</td><td>'+esc(it.name)+'</td><td>'+esc(it.contact)+'</td><td>'+esc(it.mode)+'</td><td>'+esc(it.title)+'</td>'
       +'<td><button class="mini" data-a="view">보기</button><button class="mini danger" data-a="del">삭제</button></td>';
     tr.querySelector('[data-a=view]').onclick=()=>view(it.id);
     tr.querySelector('[data-a=del]').onclick=()=>del(it.id,it.name,it.title);
@@ -307,8 +308,8 @@ go(0);
 }
 
 $('csvBtn').onclick=()=>{
-  const rows=[['시간','이름','연락처','모드','제목'],
-    ...sorted(ITEMS).map(it=>[fmt(it.ts),it.name,it.contact,it.mode,it.title])];
+  const rows=[['순번','시간','이름','연락처','모드','제목'],
+    ...sorted(ITEMS).map(it=>[it.seq||'',fmt(it.ts),it.name,it.contact,it.mode,it.title])];
   const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(',')).join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));

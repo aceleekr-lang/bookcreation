@@ -1,14 +1,13 @@
 // /api/story — Claude API로 치유 동화 생성 (키는 Vercel 환경변수 ANTHROPIC_API_KEY)
-import { kvOn, kvGet, kvSet, kvHset, kvIncr } from './_kv.js';
-// 잠금: 운영자(OWNER_KEY 일치)는 무제한, 그 외에는 평생 2편 (쿠키 + IP 메모리 기반 간이 잠금)
-const LIFETIME_LIMIT = 2;
-const ipLife = new Map(); // 배포/휴면 시 초기화되는 보조 장치 — 주 잠금은 쿠키
+import { kvOn, kvGet, kvSet, kvHset, kvIncr, kvExpire } from './_kv.js';
+// 참여 통제는 문의 비밀번호 + 순번 대기열(/api/queue)이 담당합니다 (횟수 잠금 없음)
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const ip = (req.headers['x-forwarded-for'] || 'unknown').split(',')[0].trim();
 
-  const { mode, picks, analysis, master, user, ticket, edit, draft } = req.body || {};
+  const { mode, picks, analysis, master, user, ticket, edit, draft, layout } = req.body || {};
+  const print46 = layout === 'print46'; // 4×6 인화 버전: 글 분량 제한
   if (!mode || !picks || !analysis) return res.status(400).json({ error: '잘못된 요청입니다.' });
 
   const isOwner = !!process.env.OWNER_KEY && master === process.env.OWNER_KEY;
@@ -16,13 +15,7 @@ export default async function handler(req, res) {
     const act = await kvGet('active');
     if (!ticket || act !== ticket) return res.status(409).json({ error: '아직 차례가 아니에요. 순번 안내 화면에서 기다려 주세요.' });
   }
-  const ck = (req.headers.cookie || '').match(/(?:^|; )sdlc=(\d+)/);
-  let redisUsed = 0;
-  if (kvOn) { try { redisUsed = parseInt(await kvGet('life:' + ip)) || 0; } catch (e) {} }
-  const used = Math.max(ck ? parseInt(ck[1]) : 0, ipLife.get(ip) || 0, redisUsed);
-  if (!isOwner && !edit && used >= LIFETIME_LIMIT) { // 퇴고 재요청은 이미 센 횟수이므로 통과
-    return res.status(429).json({ error: '이야기의 문은 한 사람에게 평생 두 번 열립니다. 당신의 두 이야기는 이미 지어졌어요.' });
-  }
+
 
   const isKid = mode === 'kid';
   // 주인공 동물 다양화: 매번 무작위 후보 3종 추첨 (AI가 '토끼'로 수렴하는 것 방지)
@@ -89,7 +82,8 @@ export default async function handler(req, res) {
 - 변주 원칙(절대 규칙): 독자가 고른 단어·은유·기억은 단 하나도 그대로 등장시키지 마세요. 모든 선택은 심리적·인지적·미학적으로 재해석해 같은 정서와 상징을 지닌 '전혀 다른' 소재로 표현합니다. (예: 은유가 '등불을 켜 두는 사람'이면 등불 대신 '어둠 속에서 길 잃은 이의 이름을 부르는 목소리'처럼) imagePrompt에서도 동일하게 적용하세요.
 - [기억의 결]이 주어지면 그 정서를 이야기의 밑색으로만 쓰고, 기억 속 상황 자체를 재현하지 마세요.
 - [들이지 말 것]이 주어지면 그 요소는 어떤 형태(장면·비유·언급)로도 등장시키지 마세요. imagePrompt에서도 제외하세요.
-- 무섭거나 잔인한 장면 금지. 슬픔은 다뤄도 되지만 반드시 회복으로 끝납니다.
+- 무섭거나 잔인한 장면 금지. 슬픔은 다뤄도 되지만 반드시 회복으로 끝납니다.${print46 ? `
+- (인화 버전) 각 장의 본문은 ${isKid ? '200자' : '360자'} 이내로, 맺음말은 90자 이내로 쓰세요 — 4×6 인화지 한 장에 담겨야 합니다.` : ''}
 - characterSheet: 주인공의 외형을 영어로 아주 구체적으로 고정하세요 (종/나이 인상, 몸 색과 무늬, 눈, 옷·소품, 특징 두세 가지). 이 설정표가 네 장의 그림 전체에 그대로 쓰입니다.
 - imagePrompt는 영어로, 수상작 그림책 수준의 장면 연출(구도, 빛, 인물의 감정과 몸짓, 시점)만 묘사하세요. 외형은 characterSheet가 따로 붙으니 반복하지 말고 장면에 집중하세요. 그림 속에 글자가 들어가지 않도록 "no text"를 전제하세요.
 - 반드시 아래 JSON만 출력하세요. 마크다운 백틱, 설명, 인사말 금지.
@@ -139,27 +133,30 @@ export default async function handler(req, res) {
   }
   // 최종본 저장 (Upstash) — recId 반환
   async function saveRecord(story) {
-    let recId = null;
+    let recId = null, seq = null;
     if (kvOn) {
       try {
+        // 하루 순번 (한국시간 자정 리셋) — 인화 파일명·보관함 대조용
+        const day = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+        seq = await kvIncr('seq:' + day); await kvExpire('seq:' + day, 172800);
         recId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        const rec = { id: recId, ts: Date.now(),
+        const rec = { id: recId, ts: Date.now(), seq,
           name: (user && user.name) || '', contact: (user && user.contact) || '',
           mode: mode === 'kid' ? '아이' : '어른', title: story.title, analysis, story };
         await kvSet('rec:' + recId, JSON.stringify(rec));
-        await kvHset('idx', recId, JSON.stringify({ id: recId, ts: rec.ts, name: rec.name,
+        await kvHset('idx', recId, JSON.stringify({ id: recId, ts: rec.ts, seq, name: rec.name,
           contact: rec.contact, mode: rec.mode, title: rec.title }));
       } catch (e) { console.error('kv save fail', e); recId = null; }
     }
-    return recId;
+    return { recId, seq };
   }
 
   // 퇴고만 다시 요청된 경우 (초고는 있고 퇴고가 실패했던 경우)
   if (edit && draft) {
     const edited = await editPass(draft);
     if (!edited) return res.status(502).json({ error: '퇴고 단계에서 다시 멈췄어요. 계속하기를 눌러 한 번 더 시도해 주세요.' });
-    const recId = await saveRecord(edited);
-    return res.status(200).json({ story: edited, edited: true, recId });
+    const { recId, seq } = await saveRecord(edited);
+    return res.status(200).json({ story: edited, edited: true, recId, seq });
   }
 
   try {
@@ -182,15 +179,10 @@ export default async function handler(req, res) {
     const text = (data.content || []).map(b => b.text || '').join('');
     const clean = text.replace(/```json|```/g, '').trim();
     const story = JSON.parse(clean.slice(clean.indexOf('{'), clean.lastIndexOf('}') + 1));
-    if (!isOwner) {
-      ipLife.set(ip, used + 1);
-      if (kvOn) { try { await kvIncr('life:' + ip); } catch (e) {} }
-      res.setHeader('Set-Cookie', 'sdlc=' + (used + 1) + '; Max-Age=315360000; Path=/; SameSite=Lax');
-    }
     const edited = await editPass(story);
     if (!edited) return res.status(200).json({ story, edited: false, recId: null }); // 클라이언트가 '계속하기'로 퇴고 재요청
-    const recId = await saveRecord(edited);
-    return res.status(200).json({ story: edited, edited: true, recId });
+    const { recId, seq } = await saveRecord(edited);
+    return res.status(200).json({ story: edited, edited: true, recId, seq });
   } catch (e) {
     console.error(e);
     return res.status(502).json({ error: '이야기를 짓는 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.' });
