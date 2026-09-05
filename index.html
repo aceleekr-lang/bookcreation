@@ -721,7 +721,7 @@ function renderRound(){
 $('nextBtn').onclick=()=>{
   S.timing[ROUNDS[S.round].key]=Date.now()-S.roundStart;
   if(S.round<ROUNDS.length-1){ S.round++; Snd.page(); renderRound(); }
-  else { S.analysis=analyze(); openGate(); }
+  else { $('nextBtn').disabled=true; S.analysis=analyze(); openGate(); }
 };
 
 /* ═══════════ 심리 판정 엔진 ═══════════ */
@@ -828,10 +828,12 @@ async function qapi(body){ const r=await fetch('/api/queue',{method:'POST',heade
   const d=await r.json(); if(!r.ok) throw new Error(d.error||'오류'); return d; }
 function showGate(){ show('scr-gate'); $('gateIn').value=''; setTimeout(()=>$('gateIn').focus(),400); }
 async function openGate(){
+  if(S.running||S.joining) return;
   if(MASTER){ // 운영자 기기면 조용히 통과 시도, 열쇠가 안 맞으면 일반 절차로
-    try{ const d=await qapi({action:'join',code:'',master:MASTER});
+    S.joining=true;
+    try{ const d=await qapi({action:'join',code:'',master:MASTER}); S.joining=false;
       S.ticket=d.ticket; if(d.active){ startCreate(); return; } show('scr-queue'); pollQueue(); return; }
-    catch(e){ /* 열쇠 불일치 → 비밀번호 화면 */ }
+    catch(e){ S.joining=false; /* 열쇠 불일치 → 비밀번호 화면 */ }
   }
   showGate();
 }
@@ -839,18 +841,20 @@ $('gateBtn').onclick=()=>joinQueue($('gateIn').value.trim());
 $('gateIn').addEventListener('keydown',e=>{ if(e.key==='Enter') $('gateBtn').click(); });
 async function joinQueue(code){
   if(code.length!==5){ alert('다섯 자리 번호를 넣어주세요.'); return; }
+  if(S.joining) return; S.joining=true; $('gateBtn').disabled=true;
   try{
     const d=await qapi({action:'join',code,master:''});
     S.ticket=d.ticket; Snd.ting();
-    if(d.active){ startCreate(); return; }
+    if(d.active){ S.joining=false; startCreate(); return; }
     show('scr-queue'); pollQueue();
   }catch(e){ alert(e.message); }
+  S.joining=false; $('gateBtn').disabled=false;
 }
 async function pollQueue(){
   clearInterval(qPoll);
   const tick=async()=>{
     try{ const d=await qapi({action:'status',ticket:S.ticket});
-      if(d.active){ clearInterval(qPoll); Snd.chime(); startCreate(); return; }
+      if(d.active){ clearInterval(qPoll); qPoll=null; Snd.chime(); startCreate(); return; }
       const n=d.ahead||0;
       $('qmsg').textContent = n<=0 ? '곧 차례예요' : `앞에 ${n}명이 기다리고 있어요`;
       $('qsub').innerHTML = '문은 한 번에 한 사람에게만 열려요.<br>'+(n>0?`예상 대기 약 ${n*4}분 · `:'')+'이 화면을 닫지 말고 잠시만 기다려 주세요.';
@@ -879,6 +883,7 @@ function setProg(units,stat){ // 실제 단계 도달 시 호출 → 이후 다�
 function bumpImg(){ const ok=S.images.filter(Boolean).length;
   setProg(2+ok, `이야기 완성 · 그림 ${ok}/4장 완성`); }
 async function startCreate(){
+  if(S.running) return; S.running=true; // 연타·중복 실행 방지 (한 번에 한 갈래만)
   show('scr-loading'); $('loaderr').style.display='none'; Snd.door(); heartbeat(true); S.generating=true;
   const A=S.analysis;
   $('loadread').textContent=`읽어낸 마음 — ${A.moodKo}. ${A.senseKo}. 마음이 바라는 것은 ‘${A.needKo}’. 그림은 ${A.styleKo}로 그립니다.`;
@@ -911,17 +916,17 @@ async function startCreate(){
     const fails=4-S.images.filter(Boolean).length;
     setProg(6, fails? `그림 ${fails}장은 완성하지 못했어요 — 책 안에서 다시 그릴 수 있어요` : '동화책이 완성됐어요!');
     Snd.chime(); await sleep(700);
-    queueDone();
+    queueDone(); S.running=false;
     doorWipe(()=>show('scr-book'));
   }catch(e){
-    clearInterval(loadTimer);
+    clearInterval(loadTimer); S.running=false;
     $('loadmsg').textContent='잠시 멈췄어요';
     const eb=$('loaderr'); eb.style.display='block'; eb.innerHTML='';
     eb.appendChild(document.createTextNode(e.message)); eb.appendChild(document.createElement('br'));
     const lostTurn=/차례/.test(e.message);
     if(lostTurn) eb.appendChild(document.createTextNode('자리를 오래 비워 순서가 풀렸어요. 계속하기를 누르면 다시 순서를 받아요.'));
     const rb=document.createElement('button'); rb.className='btn'; rb.style.marginTop='12px'; rb.textContent='계속하기';
-    rb.onclick=lostTurn ? ()=>{ S.ticket=null; openGate(); } : startCreate; eb.appendChild(rb);
+    rb.onclick=()=>{ rb.disabled=true; if(lostTurn){ S.ticket=null; openGate(); } else startCreate(); }; eb.appendChild(rb);
     const hb2=document.createElement('button'); hb2.className='btn ghost'; hb2.style.margin='12px 0 0 8px'; hb2.textContent='처음으로';
     hb2.onclick=()=>{ queueDone(); location.reload(); }; eb.appendChild(hb2);
   }
@@ -1086,17 +1091,15 @@ $('homeBtn').onclick=()=>{ if(confirm('처음 화면으로 돌아갈까요? 지�
 
 /* ═══════════ 4×6 인화 카드 라이브러리 (index·admin 공용) — 1200×1800px, 300dpi ═══════════ */
 const P46={W:1200,H:1800,M:130,BAND:142}; // BAND = 제본 안전 여백 12mm(300dpi)
-function p46_region(bind){ const W=P46.W,B=P46.BAND; // bind: 'left'(앞면) | 'right'(뒷면) | 없음
-  if(bind==='left') return {x0:B,w:W-B,cx:B+(W-B)/2};
-  if(bind==='right') return {x0:0,w:W-B,cx:(W-B)/2};
-  return {x0:0,w:W,cx:W/2}; }
+function p46_region(bind){ return {x0:0,w:P46.W,cx:P46.W/2}; } // 레이아웃은 전체 사용, bind는 타공 가이드 방향만
 function p46_punch(ctx,bind){ // 루즈링 10mm·5공 펀치 안내선: 가장자리에서 5.5mm, 위·아래 1cm부터 5개씩(피치 10mm, 지름 5mm)
   if(!bind) return; const mm=P46.W/101.6; // 1mm = 11.8px (4in = 101.6mm)
   const bx = bind==='left' ? 5.5*mm : P46.W-5.5*mm, r=2.5*mm;
-  ctx.save(); ctx.strokeStyle='rgba(163,134,90,.4)'; ctx.lineWidth=2; ctx.setLineDash([5,5]);
   const ys=[]; for(let i=0;i<5;i++){ ys.push((12.5+i*10)*mm); ys.push(P46.H-(12.5+i*10)*mm); }
-  for(const y of ys){ ctx.beginPath(); ctx.arc(bx,y,r,0,Math.PI*2); ctx.stroke(); }
-  ctx.setLineDash([3,9]); ctx.beginPath(); const lx = bind==='left' ? P46.BAND : P46.W-P46.BAND; ctx.moveTo(lx,0); ctx.lineTo(lx,P46.H); ctx.stroke();
+  ctx.save(); ctx.setLineDash([5,5]);
+  for(const y of ys){ ctx.beginPath(); ctx.arc(bx,y,r,0,Math.PI*2);
+    ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.stroke();
+    ctx.lineWidth=1.5; ctx.strokeStyle='rgba(60,45,20,.5)'; ctx.stroke(); }
   ctx.restore(); }
 function p46_setDpi(buf){ // JPEG 헤더에 300dpi 기록
   const u=new Uint8Array(buf); if(u[0]!==0xFF||u[1]!==0xD8) return buf;
@@ -1136,9 +1139,6 @@ function p46_base(bind){
   p46_punch(ctx,bind);
   return [c,ctx];
 }
-function p46_fitRect(bind,inset){ // 그림을 영역 안에 2:3 비율로 맞춤
-  const R=p46_region(bind); const aw=R.w-inset*2, ah=P46.H-inset*2; const s=Math.min(aw/P46.W, ah/P46.H);
-  const iw=Math.round(P46.W*s), ih=Math.round(P46.H*s); return {ix:Math.round(R.cx-iw/2), iy:Math.round((P46.H-ih)/2), iw, ih, s}; }
 function p46_ornament(ctx,cx,y,label){ // ─── ✦ 라벨 ✦ ───
   ctx.save(); ctx.textAlign='center'; ctx.fillStyle='#a3865a'; ctx.font="400 30px 'Gowun Dodum', sans-serif";
   try{ ctx.letterSpacing='8px'; }catch(e){}
@@ -1153,9 +1153,8 @@ function p46_loadImg(src){ return new Promise((res,rej)=>{ const im=new Image();
 
 async function p46_cover({img,name,title,protagonist,bind}){ // 표지: 그림 위에 제목 오버레이 (bind 시 여백 안에 매트)
   await document.fonts.ready;
-  let c,ctx,r;
-  if(bind){ [c,ctx]=p46_base(bind); r=p46_fitRect(bind,40); }
-  else { c=document.createElement('canvas'); c.width=P46.W; c.height=P46.H; ctx=c.getContext('2d'); r={ix:0,iy:0,iw:P46.W,ih:P46.H,s:1}; }
+  const c=document.createElement('canvas'); c.width=P46.W; c.height=P46.H; const ctx=c.getContext('2d');
+  const r={ix:0,iy:0,iw:P46.W,ih:P46.H,s:1};
   ctx.drawImage(await p46_loadImg(img),r.ix,r.iy,r.iw,r.ih);
   const s=r.s, cx=r.ix+r.iw/2;
   let g=ctx.createLinearGradient(0,r.iy,0,r.iy+r.ih*.42); g.addColorStop(0,'rgba(12,16,40,.72)'); g.addColorStop(1,'rgba(12,16,40,0)'); ctx.fillStyle=g; ctx.fillRect(r.ix,r.iy,r.iw,r.ih*.42);
@@ -1169,22 +1168,17 @@ async function p46_cover({img,name,title,protagonist,bind}){ // 표지: 그림 �
   if(protagonist){ ctx.fillStyle='#f5ead2'; const ps=Math.round(36*s); ctx.font=`400 ${ps}px 'Gowun Batang', serif`;
     const pl=p46_balance(ctx,p46_wrapPara(ctx,protagonist,r.iw-260*s),r.iw-260*s); const y0=r.iy+r.ih-120*s-(pl.length-1)*58*s;
     pl.forEach((l,i)=>ctx.fillText(l,cx,y0+i*58*s)); }
-  ctx.shadowColor='transparent';
+  ctx.shadowColor='transparent'; p46_punch(ctx,bind);
   return p46_toJpeg(c);
 }
-async function p46_image(img,bind){
-  if(!bind){ const c=document.createElement('canvas'); c.width=P46.W; c.height=P46.H;
-    c.getContext('2d').drawImage(await p46_loadImg(img),0,0,P46.W,P46.H); return p46_toJpeg(c); }
-  const [c,ctx]=p46_base(bind); const r=p46_fitRect(bind,96); // 여백 안에 매트 처리
-  ctx.save(); ctx.shadowColor='rgba(60,45,20,.28)'; ctx.shadowBlur=24; ctx.shadowOffsetY=8; ctx.fillStyle='#fff'; ctx.fillRect(r.ix,r.iy,r.iw,r.ih); ctx.restore();
-  ctx.drawImage(await p46_loadImg(img),r.ix,r.iy,r.iw,r.ih); return p46_toJpeg(c);
-}
+async function p46_image(img,bind){ const c=document.createElement('canvas'); c.width=P46.W; c.height=P46.H; const ctx=c.getContext('2d');
+  ctx.drawImage(await p46_loadImg(img),0,0,P46.W,P46.H); p46_punch(ctx,bind); return p46_toJpeg(c); }
 async function p46_author({name,bind}){ // 지은이의 말 — 이름은 인쇄, 아래는 손글씨용 줄노트
   await document.fonts.ready; const [c,ctx]=p46_base(bind); const R=p46_region(bind), M=P46.M;
   p46_ornament(ctx,R.cx,270,'지은이의 말');
   ctx.textAlign='left'; ctx.fillStyle='#4a3617'; ctx.font="700 44px 'Gowun Batang', serif"; ctx.fillText('지은이  '+(name||''),R.x0+M,410);
   ctx.strokeStyle='rgba(163,134,90,.5)'; ctx.lineWidth=2;
-  for(let y=540;y<=P46.H-260;y+=96){ ctx.beginPath(); ctx.moveTo(R.x0+M,y); ctx.lineTo(R.x0+R.w-M,y); ctx.stroke(); }
+  for(let y=540;y<=P46.H-560;y+=96){ ctx.beginPath(); ctx.moveTo(R.x0+M,y); ctx.lineTo(R.x0+R.w-M,y); ctx.stroke(); } // 아래쪽 약 30mm는 서명 공간
   ctx.textAlign='center'; ctx.fillStyle='#a3865a'; ctx.font="400 26px 'Gowun Dodum', sans-serif"; ctx.fillText('이야기의 문',R.cx,P46.H-135);
   return p46_toJpeg(c);
 }
