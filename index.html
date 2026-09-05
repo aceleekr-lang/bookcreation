@@ -334,6 +334,7 @@ body.kid .txt .body{font-size:clamp(1.08rem,2vw,1.25rem);line-height:2.15}
       <button class="bt" id="dlImg">이 그림 저장</button>
       <button class="bt" id="dlBook">동화책 저장</button>
       <button class="bt" id="dl46" style="display:none;border-color:var(--candle);color:var(--candle-soft)">인화용 8장 ZIP</button>
+      <button class="bt" id="dlBook46" style="display:none;border-color:var(--candle);color:var(--candle-soft)">책제작용 10장 ZIP</button>
     </div>
   </div>
   <div class="book" id="book">
@@ -634,7 +635,7 @@ function lifeLocked(){ return false; } // 횟수 잠금 없음 — 참여 통제
 const PRINT46 = /^\/46\/?$/.test(location.pathname) || /(^|[?&])p=46(&|$)/.test(location.search);
 if(PRINT46){ document.addEventListener('DOMContentLoaded',()=>{
   const t=document.querySelector('#scr-enter .eyebrow'); if(t) t.textContent='4×6 인화지 그림책 버전 · 마음을 읽어주는 나만의 치유동화';
-  const b=document.getElementById('dl46'); if(b) b.style.display='';
+  for(const id of ['dl46','dlBook46']){ const b=document.getElementById(id); if(b) b.style.display=''; }
 }); }
 const EMPTY_PICKS=()=>({colors:[],shape:[],style:[],detail:[],abstract:[],space:[],sound:[],weather:[],emotions:[],memories:[],desires:[],avoids:[],metaphors:[]});
 const S={mode:null, round:0, picks:EMPTY_PICKS(), timing:{}, roundStart:0, user:{name:'',contact:''}, story:null, images:[null,null,null,null], analysis:null, page:0};
@@ -1084,7 +1085,19 @@ $('viewBtn').onclick=()=>{ const b=$('book'); b.classList.toggle('scroll');
 $('homeBtn').onclick=()=>{ if(confirm('처음 화면으로 돌아갈까요? 지금 동화는 저장하지 않으면 사라져요.')) location.reload(); };
 
 /* ═══════════ 4×6 인화 카드 라이브러리 (index·admin 공용) — 1200×1800px, 300dpi ═══════════ */
-const P46={W:1200,H:1800,M:130};
+const P46={W:1200,H:1800,M:130,BAND:142}; // BAND = 제본 안전 여백 12mm(300dpi)
+function p46_region(bind){ const W=P46.W,B=P46.BAND; // bind: 'left'(앞면) | 'right'(뒷면) | 없음
+  if(bind==='left') return {x0:B,w:W-B,cx:B+(W-B)/2};
+  if(bind==='right') return {x0:0,w:W-B,cx:(W-B)/2};
+  return {x0:0,w:W,cx:W/2}; }
+function p46_punch(ctx,bind){ // 루즈링 10mm·5공 펀치 안내선: 가장자리에서 5.5mm, 위·아래 1cm부터 5개씩(피치 10mm, 지름 5mm)
+  if(!bind) return; const mm=P46.W/101.6; // 1mm = 11.8px (4in = 101.6mm)
+  const bx = bind==='left' ? 5.5*mm : P46.W-5.5*mm, r=2.5*mm;
+  ctx.save(); ctx.strokeStyle='rgba(163,134,90,.4)'; ctx.lineWidth=2; ctx.setLineDash([5,5]);
+  const ys=[]; for(let i=0;i<5;i++){ ys.push((12.5+i*10)*mm); ys.push(P46.H-(12.5+i*10)*mm); }
+  for(const y of ys){ ctx.beginPath(); ctx.arc(bx,y,r,0,Math.PI*2); ctx.stroke(); }
+  ctx.setLineDash([3,9]); ctx.beginPath(); const lx = bind==='left' ? P46.BAND : P46.W-P46.BAND; ctx.moveTo(lx,0); ctx.lineTo(lx,P46.H); ctx.stroke();
+  ctx.restore(); }
 function p46_setDpi(buf){ // JPEG 헤더에 300dpi 기록
   const u=new Uint8Array(buf); if(u[0]!==0xFF||u[1]!==0xD8) return buf;
   if(u[2]===0xFF&&u[3]===0xE0&&u[6]===0x4A&&u[7]===0x46&&u[8]===0x49&&u[9]===0x46){ u[13]=1; u[14]=1; u[15]=44; u[16]=1; u[17]=44; return u.buffer; }
@@ -1112,15 +1125,20 @@ function p46_balance(ctx,lines,maxW){ // 마지막 줄에 한두 글자만 남�
 function p46_layout(ctx,text,maxW){ // 문단별 줄 배열 [[...],[...]]
   return String(text||'').split('\n').map(p=>p.trim()).filter(Boolean).map(p=>p46_balance(ctx,p46_wrapPara(ctx,p,maxW),maxW));
 }
-function p46_base(){
+function p46_base(bind){
   const c=document.createElement('canvas'); c.width=P46.W; c.height=P46.H; const ctx=c.getContext('2d');
+  const R=p46_region(bind);
   ctx.fillStyle='#f8f0dd'; ctx.fillRect(0,0,P46.W,P46.H);
-  const g=ctx.createRadialGradient(P46.W/2,P46.H/2,300,P46.W/2,P46.H/2,1300); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(120,90,40,.10)');
+  const g=ctx.createRadialGradient(R.cx,P46.H/2,300,R.cx,P46.H/2,1300); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(120,90,40,.10)');
   ctx.fillStyle=g; ctx.fillRect(0,0,P46.W,P46.H);
-  ctx.strokeStyle='rgba(163,134,90,.6)'; ctx.lineWidth=3; ctx.strokeRect(58,58,P46.W-116,P46.H-116);
-  ctx.strokeStyle='rgba(163,134,90,.38)'; ctx.lineWidth=1.5; ctx.strokeRect(74,74,P46.W-148,P46.H-148);
+  ctx.strokeStyle='rgba(163,134,90,.6)'; ctx.lineWidth=3; ctx.strokeRect(R.x0+58,58,R.w-116,P46.H-116);
+  ctx.strokeStyle='rgba(163,134,90,.38)'; ctx.lineWidth=1.5; ctx.strokeRect(R.x0+74,74,R.w-148,P46.H-148);
+  p46_punch(ctx,bind);
   return [c,ctx];
 }
+function p46_fitRect(bind,inset){ // 그림을 영역 안에 2:3 비율로 맞춤
+  const R=p46_region(bind); const aw=R.w-inset*2, ah=P46.H-inset*2; const s=Math.min(aw/P46.W, ah/P46.H);
+  const iw=Math.round(P46.W*s), ih=Math.round(P46.H*s); return {ix:Math.round(R.cx-iw/2), iy:Math.round((P46.H-ih)/2), iw, ih, s}; }
 function p46_ornament(ctx,cx,y,label){ // ─── ✦ 라벨 ✦ ───
   ctx.save(); ctx.textAlign='center'; ctx.fillStyle='#a3865a'; ctx.font="400 30px 'Gowun Dodum', sans-serif";
   try{ ctx.letterSpacing='8px'; }catch(e){}
@@ -1133,29 +1151,52 @@ function p46_ornament(ctx,cx,y,label){ // ─── ✦ 라벨 ✦ ───
 function p46_toJpeg(c){ return new Promise(r=>c.toBlob(b=>b.arrayBuffer().then(x=>r(p46_setDpi(x))),'image/jpeg',.93)); }
 function p46_loadImg(src){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; }); }
 
-async function p46_cover({img,name,title,protagonist}){ // 표지: 그림 위에 제목 오버레이
+async function p46_cover({img,name,title,protagonist,bind}){ // 표지: 그림 위에 제목 오버레이 (bind 시 여백 안에 매트)
   await document.fonts.ready;
-  const c=document.createElement('canvas'); c.width=P46.W; c.height=P46.H; const ctx=c.getContext('2d');
-  ctx.drawImage(await p46_loadImg(img),0,0,P46.W,P46.H);
-  let g=ctx.createLinearGradient(0,0,0,P46.H*.42); g.addColorStop(0,'rgba(12,16,40,.72)'); g.addColorStop(1,'rgba(12,16,40,0)'); ctx.fillStyle=g; ctx.fillRect(0,0,P46.W,P46.H*.42);
-  g=ctx.createLinearGradient(0,P46.H*.74,0,P46.H); g.addColorStop(0,'rgba(12,16,40,0)'); g.addColorStop(1,'rgba(12,16,40,.7)'); ctx.fillStyle=g; ctx.fillRect(0,P46.H*.74,P46.W,P46.H*.26);
-  ctx.textAlign='center'; ctx.shadowColor='rgba(0,0,0,.55)'; ctx.shadowBlur=18; ctx.shadowOffsetY=3;
-  ctx.fillStyle='#f8dfa8'; ctx.font="400 32px 'Gowun Dodum', sans-serif"; try{ ctx.letterSpacing='10px'; }catch(e){}
-  ctx.fillText((name?name+'님':'당신')+'을 위한 동화',P46.W/2,190); try{ ctx.letterSpacing='0px'; }catch(e){}
-  ctx.fillStyle='#fff8e8'; let size=96; let lines;
-  do{ ctx.font=`700 ${size}px 'Gowun Batang', serif`; lines=p46_balance(ctx,p46_wrapPara(ctx,title,P46.W-240),P46.W-240); if(lines.length<=3) break; size-=8; }while(size>60);
-  lines.forEach((l,i)=>ctx.fillText(l,P46.W/2,300+i*size*1.25));
-  if(protagonist){ ctx.fillStyle='#f5ead2'; ctx.font="400 36px 'Gowun Batang', serif";
-    const pl=p46_balance(ctx,p46_wrapPara(ctx,protagonist,P46.W-260),P46.W-260); const y0=P46.H-120-(pl.length-1)*58;
-    pl.forEach((l,i)=>ctx.fillText(l,P46.W/2,y0+i*58)); }
+  let c,ctx,r;
+  if(bind){ [c,ctx]=p46_base(bind); r=p46_fitRect(bind,40); }
+  else { c=document.createElement('canvas'); c.width=P46.W; c.height=P46.H; ctx=c.getContext('2d'); r={ix:0,iy:0,iw:P46.W,ih:P46.H,s:1}; }
+  ctx.drawImage(await p46_loadImg(img),r.ix,r.iy,r.iw,r.ih);
+  const s=r.s, cx=r.ix+r.iw/2;
+  let g=ctx.createLinearGradient(0,r.iy,0,r.iy+r.ih*.42); g.addColorStop(0,'rgba(12,16,40,.72)'); g.addColorStop(1,'rgba(12,16,40,0)'); ctx.fillStyle=g; ctx.fillRect(r.ix,r.iy,r.iw,r.ih*.42);
+  g=ctx.createLinearGradient(0,r.iy+r.ih*.74,0,r.iy+r.ih); g.addColorStop(0,'rgba(12,16,40,0)'); g.addColorStop(1,'rgba(12,16,40,.7)'); ctx.fillStyle=g; ctx.fillRect(r.ix,r.iy+r.ih*.74,r.iw,r.ih*.26);
+  ctx.textAlign='center'; ctx.shadowColor='rgba(0,0,0,.55)'; ctx.shadowBlur=18*s; ctx.shadowOffsetY=3;
+  ctx.fillStyle='#f8dfa8'; ctx.font=`400 ${Math.round(32*s)}px 'Gowun Dodum', sans-serif`; try{ ctx.letterSpacing=Math.round(10*s)+'px'; }catch(e){}
+  ctx.fillText((name?name+'님':'당신')+'을 위한 동화',cx,r.iy+190*s); try{ ctx.letterSpacing='0px'; }catch(e){}
+  ctx.fillStyle='#fff8e8'; let size=Math.round(96*s); let lines; const tw=r.iw-240*s;
+  do{ ctx.font=`700 ${size}px 'Gowun Batang', serif`; lines=p46_balance(ctx,p46_wrapPara(ctx,title,tw),tw); if(lines.length<=3) break; size-=8; }while(size>60*s);
+  lines.forEach((l,i)=>ctx.fillText(l,cx,r.iy+300*s+i*size*1.25));
+  if(protagonist){ ctx.fillStyle='#f5ead2'; const ps=Math.round(36*s); ctx.font=`400 ${ps}px 'Gowun Batang', serif`;
+    const pl=p46_balance(ctx,p46_wrapPara(ctx,protagonist,r.iw-260*s),r.iw-260*s); const y0=r.iy+r.ih-120*s-(pl.length-1)*58*s;
+    pl.forEach((l,i)=>ctx.fillText(l,cx,y0+i*58*s)); }
+  ctx.shadowColor='transparent';
   return p46_toJpeg(c);
 }
-async function p46_image(img){ const c=document.createElement('canvas'); c.width=P46.W; c.height=P46.H;
-  c.getContext('2d').drawImage(await p46_loadImg(img),0,0,P46.W,P46.H); return p46_toJpeg(c); }
-async function p46_text({label,text,pageNo,isKid,center,footer,sub,copyright}){ // 글 카드: 최대 글자 크기 자동, 고아 방지, 동화책 레이아웃
+async function p46_image(img,bind){
+  if(!bind){ const c=document.createElement('canvas'); c.width=P46.W; c.height=P46.H;
+    c.getContext('2d').drawImage(await p46_loadImg(img),0,0,P46.W,P46.H); return p46_toJpeg(c); }
+  const [c,ctx]=p46_base(bind); const r=p46_fitRect(bind,96); // 여백 안에 매트 처리
+  ctx.save(); ctx.shadowColor='rgba(60,45,20,.28)'; ctx.shadowBlur=24; ctx.shadowOffsetY=8; ctx.fillStyle='#fff'; ctx.fillRect(r.ix,r.iy,r.iw,r.ih); ctx.restore();
+  ctx.drawImage(await p46_loadImg(img),r.ix,r.iy,r.iw,r.ih); return p46_toJpeg(c);
+}
+async function p46_author({name,bind}){ // 지은이의 말 — 이름은 인쇄, 아래는 손글씨용 줄노트
+  await document.fonts.ready; const [c,ctx]=p46_base(bind); const R=p46_region(bind), M=P46.M;
+  p46_ornament(ctx,R.cx,270,'지은이의 말');
+  ctx.textAlign='left'; ctx.fillStyle='#4a3617'; ctx.font="700 44px 'Gowun Batang', serif"; ctx.fillText('지은이  '+(name||''),R.x0+M,410);
+  ctx.strokeStyle='rgba(163,134,90,.5)'; ctx.lineWidth=2;
+  for(let y=540;y<=P46.H-260;y+=96){ ctx.beginPath(); ctx.moveTo(R.x0+M,y); ctx.lineTo(R.x0+R.w-M,y); ctx.stroke(); }
+  ctx.textAlign='center'; ctx.fillStyle='#a3865a'; ctx.font="400 26px 'Gowun Dodum', sans-serif"; ctx.fillText('이야기의 문',R.cx,P46.H-135);
+  return p46_toJpeg(c);
+}
+async function p46_photo({bind}){ // 간지 — 담백한 빈 면 (가운데 작은 장식만)
+  await document.fonts.ready; const [c,ctx]=p46_base(bind); const R=p46_region(bind);
+  p46_ornament(ctx,R.cx,P46.H/2+10,'이야기의 문');
+  return p46_toJpeg(c);
+}
+async function p46_text({label,text,pageNo,isKid,center,footer,sub,copyright,bind}){ // 글 카드: 최대 글자 크기 자동, 고아 방지, 동화책 레이아웃
   await document.fonts.ready;
-  const [c,ctx]=p46_base(); const M=P46.M, maxW=P46.W-M*2, top=400, bottom=P46.H-230, lh=1.92;
-  p46_ornament(ctx,P46.W/2,270,label);
+  const [c,ctx]=p46_base(bind); const R=p46_region(bind); const M=R.x0+P46.M, maxW=R.w-P46.M*2, top=400, bottom=P46.H-230, lh=1.92;
+  p46_ornament(ctx,R.cx,270,label);
   let size=isKid?66:58, paras, subParas=[], subSize=0;
   const subLh=1.75;
   const subH=()=> subParas.length ? subSize*2.2 + subParas.reduce((s,p)=>s+p.length*subSize*subLh,0) : 0;
@@ -1167,17 +1208,17 @@ async function p46_text({label,text,pageNo,isKid,center,footer,sub,copyright}){ 
   const total=paras.reduce((s,p)=>s+p.length*size*lh,0)+(paras.length-1)*size*.7 + subH();
   let y = top+((bottom-top)-total)/2+size*.8; // 세로 가운데 (장면 글도 그림책처럼)
   ctx.font=`400 ${size}px 'Gowun Batang', serif`;
-  for(const p of paras){ for(const l of p){ ctx.fillText(l, center?P46.W/2:M, y); y+=size*lh; } y+=size*.7; }
+  for(const p of paras){ for(const l of p){ ctx.fillText(l, center?R.cx:M, y); y+=size*lh; } y+=size*.7; }
   if(subParas.length){ // 작은 해설 문단 (점선 아래)
     y+=subSize*.3; ctx.strokeStyle='rgba(163,134,90,.6)'; ctx.setLineDash([8,10]); ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(M,y); ctx.lineTo(P46.W-M,y); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(M,y); ctx.lineTo(R.x0+R.w-P46.M,y); ctx.stroke(); ctx.setLineDash([]);
     y+=subSize*1.7; ctx.font=`400 ${subSize}px 'Gowun Dodum', sans-serif`; ctx.fillStyle='#6b5a35'; ctx.textAlign='left';
     for(const p of subParas){ for(const l of p){ ctx.fillText(l,M,y); y+=subSize*subLh; } }
   }
   ctx.textAlign='center'; ctx.fillStyle='#a3865a'; ctx.font="400 28px 'Gowun Dodum', sans-serif";
-  if(pageNo) ctx.fillText('— '+pageNo+' —',P46.W/2,P46.H-135);
-  if(footer) ctx.fillText(footer,P46.W/2,P46.H-135);
-  if(copyright){ ctx.textAlign='right'; ctx.font="400 22px 'Gowun Dodum', sans-serif"; ctx.fillStyle='rgba(163,134,90,.9)'; ctx.fillText(copyright,P46.W-92,P46.H-92); }
+  if(pageNo) ctx.fillText('— '+pageNo+' —',R.cx,P46.H-135);
+  if(footer) ctx.fillText(footer,R.cx,P46.H-135);
+  if(copyright){ ctx.textAlign='right'; ctx.font="400 22px 'Gowun Dodum', sans-serif"; ctx.fillStyle='rgba(163,134,90,.9)'; ctx.fillText(copyright,R.x0+R.w-92,P46.H-92); }
   return p46_toJpeg(c);
 }
 function p46_zip(files){ // 압축 없는 ZIP (라이브러리 불필요)
@@ -1208,6 +1249,19 @@ async function build46Zip({name,isKid,story,images,analysis}){ // 8장: 표지 /
     footer:'이야기의 문 · '+(name?name+'님':'당신')+'을 위한 동화',copyright:P46_COPYRIGHT})});
   return p46_zip(files);
 }
+async function build46Book({name,isKid,story,images,analysis}){ // 책제작용 10장 — 홀수=앞면(왼쪽 여백), 짝수=뒷면(오른쪽 여백)
+  const CH=['첫 번째 이야기','두 번째 이야기','마지막 이야기']; const L='left', Rt='right'; const files=[];
+  files.push({name:'01_표지.jpg',data:await p46_cover({img:images[0],name,title:story.title,protagonist:story.protagonist,bind:L})});
+  files.push({name:'02_지은이의_말.jpg',data:await p46_author({name,bind:Rt})});
+  files.push({name:'03_간지.jpg',data:await p46_photo({bind:L})});
+  for(let i=0;i<3;i++){
+    files.push({name:`0${i*2+4}_그림${i+1}.jpg`,data:await p46_image(images[i+1],Rt)});
+    files.push({name:`0${i*2+5}_글${i+1}.jpg`,data:await p46_text({label:CH[i],text:story.scenes[i].text,pageNo:i+1,isKid,bind:L})});
+  }
+  files.push({name:'10_이야기를_덮으며.jpg',data:await p46_text({label:'이야기를 덮으며',text:story.closing||'',isKid,center:true,sub:p46_rx(analysis),
+    footer:'이야기의 문 · '+(name?name+'님':'당신')+'을 위한 동화',copyright:P46_COPYRIGHT,bind:Rt})});
+  return p46_zip(files);
+}
 function p46_filename(seq,name,title){ const safe=t=>String(t||'').replace(/[\\/:*?"<>|]/g,'').trim();
   return `${String(seq||0).padStart(2,'0')}_${safe(name)||'무명'}_${safe(title)}.zip`; }
 $('dl46').onclick=async()=>{
@@ -1218,6 +1272,15 @@ $('dl46').onclick=async()=>{
     dl(p46_filename(S.seq,S.user.name,S.story.title),URL.createObjectURL(blob)); }
   catch(e){ alert('인화용 파일을 만들지 못했어요: '+e.message); }
   btn.disabled=false; btn.textContent='인화용 8장 ZIP';
+};
+$('dlBook46').onclick=async()=>{ // 책제작용 10장 (제본 여백 포함)
+  if(!S.story) return;
+  if(S.images.some(x=>!x)){ alert('그림 4장이 모두 준비된 뒤에 저장할 수 있어요.'); return; }
+  const btn=$('dlBook46'); btn.disabled=true; btn.textContent='만드는 중…';
+  try{ const blob=await build46Book({name:S.user.name,isKid:S.mode==='kid',story:S.story,images:S.images,analysis:S.analysis});
+    dl(p46_filename(S.seq,S.user.name,S.story.title).replace(/\.zip$/,'_책제작.zip'),URL.createObjectURL(blob)); }
+  catch(e){ alert('책제작용 파일을 만들지 못했어요: '+e.message); }
+  btn.disabled=false; btn.textContent='책제작용 10장 ZIP';
 };
 
 /* ═══════════ 다운로드 ═══════════ */
