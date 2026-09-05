@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>이야기의 문 — 마음을 읽는 치유 동화</title>
+<title>이야기의 문 — 마음을 읽어주는 나만의 치유동화</title>
 <meta property="og:title" content="이야기의 문">
-<meta property="og:description" content="당신의 마음을 읽고, 당신만을 위한 치유 동화를 지어드립니다.">
+<meta property="og:description" content="마음을 읽어주는 나만의 치유동화 — 몇 개의 단어만 고르면 당신만을 위한 동화가 지어집니다.">
 <meta property="og:image" content="https://bookcreation-blond.vercel.app/assets/og.jpg">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <link rel="icon" type="image/png" href="assets/favicon.png">
@@ -68,6 +68,8 @@ h1,h2,.serif{font-family:'Gowun Batang',serif}
 .pickcard .orbimg{width:70px;height:70px;border-radius:50%;object-fit:cover;filter:drop-shadow(0 0 10px rgba(240,195,107,.3))}
 .pickcard.picked .cardimg,.pickcard.picked .orbimg{box-shadow:0 0 20px rgba(240,195,107,.55)}
 .hint{font-size:.9rem;opacity:.7;animation:breath 2.8s ease-in-out infinite}
+.notice{margin-top:22px;font-size:.74rem;opacity:.55;line-height:1.7;text-wrap:pretty}
+.notice a{color:var(--candle-soft)}
 .fields{display:flex;flex-direction:column;gap:12px;margin:26px 0 22px;width:min(88vw,380px)}
 .tin{font:inherit;font-size:1.05rem;padding:14px 18px;border-radius:14px;text-align:center;
   border:1px solid rgba(247,238,218,.3);background:rgba(255,255,255,.06);color:var(--paper)}
@@ -139,6 +141,14 @@ body.kid .wcard{font-size:clamp(1.05rem,3.6vw,1.2rem);padding:15px 24px}
 .pickcard.picked{border-color:var(--candle);background:linear-gradient(135deg,rgba(240,195,107,.2),rgba(221,143,126,.15));
   box-shadow:0 0 20px rgba(240,195,107,.35);transform:translateY(-3px)}
 .pickcard.picked svg{stroke:var(--candle-soft)}
+.snd-calm .orbimg,.snd-calm .orb{animation:sndCalm 3.2s ease-in-out infinite}
+.snd-playful .orbimg,.snd-playful .orb{animation:sndPlay .9s cubic-bezier(.3,1.6,.6,1) infinite}
+.snd-deep .orbimg,.snd-deep .orb{animation:sndDeep 2.6s ease-in-out infinite}
+.snd-sparkle .orbimg,.snd-sparkle .orb{animation:sndSpark 1.4s ease-in-out infinite}
+@keyframes sndCalm{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-5px) rotate(2deg)}}
+@keyframes sndPlay{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-9px) scale(1.08,.94)}}
+@keyframes sndDeep{0%,100%{transform:scale(1);filter:drop-shadow(0 0 4px rgba(240,195,107,.2))}50%{transform:scale(1.09);filter:drop-shadow(0 0 20px rgba(240,195,107,.6))}}
+@keyframes sndSpark{0%,100%{filter:brightness(1) drop-shadow(0 0 6px rgba(255,255,255,.2))}30%{filter:brightness(1.5) drop-shadow(0 0 16px rgba(255,255,255,.8))}60%{filter:brightness(1.1)}}
 .btn{
   font:inherit;font-weight:700;cursor:pointer;border:none;border-radius:999px;
   padding:15px 42px;font-size:1.05rem;color:#231a08;
@@ -236,10 +246,11 @@ body.kid .txt .body{font-size:clamp(1.08rem,2vw,1.25rem);line-height:2.15}
 
 <!-- 1. 입장 -->
 <section class="screen on" id="scr-enter">
-  <p class="eyebrow">MIND · TALE</p>
+  <p class="eyebrow">마음을 읽어주는 나만의 치유동화</p>
   <h1 class="title">이야기의 문</h1>
-  <p class="sub">문 너머에는 당신의 마음을 닮은 이야기가 살고 있어요.<br>몇 개의 단어만 고르면, 당신만을 위한 동화가 지어집니다.</p>
+  <p class="sub">문 너머에는 당신의 마음을 닮은 이야기가 살고 있어요.<br>몇 개의 단어만 고르면, 당신만을 위한 동화가 지어집니다.<br><span style="opacity:.75;font-size:.9em">고르는 데 5분쯤, 동화가 지어지는 데 3~4분쯤 걸려요.</span></p>
   <button class="tap" id="enterBtn"><img class="doorimg" src="assets/door-main.webp" alt="빛나는 이야기의 문"><p class="hint">문을 두드려 주세요</p></button>
+  <p class="notice">이 서비스는 심리 검사·상담·치료가 아닌 창작 콘텐츠입니다 · <a href="terms.html" target="_blank">이용안내·개인정보처리방침</a></p>
 </section>
 
 <!-- 2. 모드 선택 -->
@@ -261,7 +272,7 @@ body.kid .txt .body{font-size:clamp(1.08rem,2vw,1.25rem);line-height:2.15}
   <div class="fields">
     <input id="uName" class="tin" maxlength="20" placeholder="이름 (필수)">
     <input id="uContact" class="tin" maxlength="40" placeholder="네이버 아이디 또는 전화번호 (필수)">
-    <label class="agree"><input type="checkbox" id="uAgree"> 입력한 이름·연락처와 완성된 동화(글)가 운영자에게 전달되어 보관되는 것에 동의합니다.</label>
+    <label class="agree"><input type="checkbox" id="uAgree"> 입력한 이름·연락처와 완성된 동화가 운영자에게 전달·보관되는 것에 동의합니다. 만 14세 미만은 보호자가 대신 확인하고 동의해 주세요. <a href="terms.html" target="_blank" style="color:var(--candle-soft)">개인정보처리방침</a></label>
   </div>
   <button class="btn" id="infoBtn">문패 걸고 들어가기</button>
 </section>
@@ -275,6 +286,22 @@ body.kid .txt .body{font-size:clamp(1.08rem,2vw,1.25rem);line-height:2.15}
   </div>
   <div class="cards" id="cardGrid"></div>
   <button class="btn" id="nextBtn" disabled>다음</button>
+</section>
+
+<!-- 3.5 문의 비밀번호 -->
+<section class="screen" id="scr-gate">
+  <p class="eyebrow">문의 비밀번호</p>
+  <h2 class="round-q serif">진행자가 알려주는<br>다섯 자리 번호를 넣어주세요</h2>
+  <p class="round-note">번호는 3분마다 바뀌어요.</p>
+  <div class="fields"><input id="gateIn" class="tin" inputmode="numeric" maxlength="5" placeholder="●●●●●" style="letter-spacing:.4em;font-size:1.4rem"></div>
+  <button class="btn" id="gateBtn">문 열기</button>
+</section>
+
+<!-- 3.6 대기열 -->
+<section class="screen" id="scr-queue">
+  <div class="door load-door"></div>
+  <p id="qmsg" class="serif dots" style="margin-top:22px;font-size:1.05rem">순서를 기다리는 중</p>
+  <p id="qsub" style="margin-top:12px;font-size:.9rem;opacity:.75;line-height:1.8;max-width:420px">문은 한 번에 한 사람에게만 열려요.<br>이 화면을 닫지 말고 잠시만 기다려 주세요.</p>
 </section>
 
 <!-- 4. 로딩 -->
@@ -593,7 +620,7 @@ function lifeUp(){ const n=lifeCount()+1; store.set('sd_life',String(n));
 function lifeLocked(){ return !MASTER && lifeCount()>=2; }
 
 const EMPTY_PICKS=()=>({colors:[],shape:[],style:[],detail:[],abstract:[],space:[],sound:[],weather:[],emotions:[],memories:[],desires:[],avoids:[],metaphors:[]});
-const S={mode:null, round:0, picks:EMPTY_PICKS(), user:{name:'',contact:''}, story:null, images:[null,null,null,null], analysis:null, page:0};
+const S={mode:null, round:0, picks:EMPTY_PICKS(), timing:{}, roundStart:0, user:{name:'',contact:''}, story:null, images:[null,null,null,null], analysis:null, page:0};
 const $=id=>document.getElementById(id);
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on')); $(id).classList.add('on'); }
 function doorWipe(cb){ const w=$('doorwipe'); w.classList.add('go'); w.classList.remove('open');
@@ -618,7 +645,7 @@ $('infoBtn').onclick=()=>{
 
 /* ═══════════ 카드 라운드 ═══════════ */
 function renderRound(){
-  const r=ROUNDS[S.round];
+  const r=ROUNDS[S.round]; S.roundStart=Date.now();
   const cd=$('candles'); cd.innerHTML='';
   for(let i=0;i<ROUNDS.length;i++){ const c=document.createElement('span');
     c.className='candle'+(i<S.round?' lit':''); cd.appendChild(c); }
@@ -635,7 +662,7 @@ function renderRound(){
     let b=document.createElement('button');
     if(r.type==='color'){ b.className='swatch'; b.style.background=item.c; b.title=item.w; b.setAttribute('aria-label',item.w); }
     else if(r.type==='word'){ b.className='wcard'; b.textContent=item.w; }
-    else { b.className='pickcard';
+    else { b.className='pickcard'+(r.type==='sound'?' snd-'+item.k:'');
       if(item.img){ const im=document.createElement('img'); im.src=item.img; im.alt='';
         im.className=r.type==='sound'?'orbimg':'cardimg'; b.appendChild(im); }
       else if(r.type==='sound'){ const o=document.createElement('div'); o.className='orb'; o.textContent=item.icon; b.appendChild(o); }
@@ -674,18 +701,22 @@ function renderRound(){
   $('nextBtn').disabled=true; $('nextBtn').textContent='다음';
 }
 $('nextBtn').onclick=()=>{
+  S.timing[ROUNDS[S.round].key]=Date.now()-S.roundStart;
   if(S.round<ROUNDS.length-1){ S.round++; Snd.page(); renderRound(); }
-  else { S.analysis=analyze(); startCreate(); }
+  else { S.analysis=analyze(); openGate(); }
 };
 
 /* ═══════════ 심리 판정 엔진 ═══════════ */
 function analyze(){
   const bank=BANK[S.mode]; const isKid=S.mode==='kid';
   // 1) 정서 좌표 — 감정 단어(55%) + 색(30%) + 마음 날씨(15%) 교차
-  const em=bank.emotions.filter(e=>S.picks.emotions.includes(e.w));
-  const wv=em.length?em.reduce((s,e)=>s+e.v,0)/em.length:0, wa=em.length?em.reduce((s,e)=>s+e.a,0)/em.length:0;
+  // 감정 단어: 고른 순서대로 정렬, 첫 선택에 가중치 1.5 (첫 반응이 핵심 정서)
+  const em=S.picks.emotions.map(w=>bank.emotions.find(e=>e.w===w)).filter(Boolean);
+  const ew=em.map((e,i)=>i===0?1.5:1), ewSum=ew.reduce((s,x)=>s+x,0);
+  const wv=em.length?em.reduce((s,e,i)=>s+e.v*ew[i],0)/ewSum:0, wa=em.length?em.reduce((s,e,i)=>s+e.a*ew[i],0)/ewSum:0;
   const cs=SENSE.colors.filter(c=>S.picks.colors.includes(c.w));
-  const cv=cs.length?cs.reduce((s,c)=>s+c.v,0)/cs.length:0, ca=cs.length?cs.reduce((s,c)=>s+c.a,0)/cs.length:0;
+  // 색 원판은 긍정 색이 많아 평균이 +0.27로 치우쳐 있음 → 중심을 0으로 재보정
+  const cv=cs.length?cs.reduce((s,c)=>s+c.v,0)/cs.length-0.27:0, ca=cs.length?cs.reduce((s,c)=>s+c.a,0)/cs.length:0;
   const wx=bank.weather.find(x=>S.picks.weather.includes(x.w));
   const v=wv*.55+cv*.3+(wx?wx.lv:0)*.15, a=wa*.55+ca*.3+(wx?wx.la:0)*.15;
   // 2) 결핍 욕구 — 바람 단어 + 공간(1.5) + 기억의 결(0.5)
@@ -700,7 +731,7 @@ function analyze(){
   const sc=bank.metaphors.filter(s=>S.picks.metaphors.includes(s.w));
   const warmVotes=cs.filter(c=>c.t==='warm').length*1.5 + sc.filter(s=>s.p==='warm').length;
   const coolVotes=cs.filter(c=>c.t==='cool').length*1.5 + sc.filter(s=>s.p==='cool').length;
-  const palette = warmVotes>=coolVotes ? 'warm' : 'cool';
+  const palette = Math.abs(warmVotes-coolVotes)<1 ? 'mixed' : (warmVotes>coolVotes ? 'warm' : 'cool');
   // 4) 형태·소리·기억·회피
   const shape=SENSE.shapes.find(s=>s.w===S.picks.shape[0]);
   const styleChoice=SENSE.styles.find(s=>s.w===S.picks.style[0])||SENSE.styles[0];
@@ -715,9 +746,11 @@ function analyze(){
 
   const needKo={autonomy:'자유와 스스로 선택하는 힘(자율성)',competence:'해내는 기쁨과 인정(유능감)',
     relatedness:'곁에 있어주는 존재와의 연결(관계성)',safety:'안심하고 쉴 수 있는 품(안전감)'}[need];
-  const moodKo = v>=0
-    ? (a>=0?'밝고 활기찬 상태':'평온하고 따뜻한 상태')
-    : (a>=.15?'긴장과 불안이 높은 상태 — 진정이 필요함':'기운이 가라앉고 지친 상태 — 따뜻한 온기가 필요함');
+  const moodKo = v>.22
+    ? (a>.2?'밝고 활기찬 상태':'평온하고 따뜻한 상태')
+    : v<-.22
+      ? (a>=.15?'긴장과 불안이 높은 상태 — 진정이 필요함':'기운이 가라앉고 지친 상태 — 따뜻한 온기가 필요함')
+      : (a>.2?'들뜸과 초조함이 오가는, 마음이 흔들리는 상태':'잔잔하지만 어딘가 가라앉은, 조용한 상태');
 
   /* ── 화풍 결정: 고른 형태가 화풍(재료) 자체를 정합니다 — 선택마다 확실히 다른 그림 ── */
   const MEDIA={
@@ -732,12 +765,13 @@ function analyze(){
   const abs_=ABS_DEF[absK];
   const media = styleChoice.k==='auto' ? MEDIA[shape.k] : styleChoice;
   let styleEn=media.en+', '+abs_.en+', '+det.en, moodStyleKo;
-  if(v<0 && a>=.15){ styleEn+=', muted calming palette, minimal detail, soothing quiet atmosphere'; moodStyleKo='차분히 가라앉힌 색'; }
-  else if(v<0){ styleEn+=', warm golden light gradually breaking through, soft hopeful mood'; moodStyleKo='서서히 밝아지는 온기'; }
-  else if(a>=.2){ styleEn+=', vivid luminous colors, joyful energy'; moodStyleKo='생기 넘치는 색'; }
+  if(v<-.22 && a>=.15){ styleEn+=', muted calming palette, minimal detail, soothing quiet atmosphere'; moodStyleKo='차분히 가라앉힌 색'; }
+  else if(v<-.22){ styleEn+=', warm golden light gradually breaking through, soft hopeful mood'; moodStyleKo='서서히 밝아지는 온기'; }
+  else if(v<=.22){ styleEn+= a>.2 ? ', restless shifting light, contrast of shadow and glow' : ', quiet subdued tones with a single warm accent'; moodStyleKo= a>.2 ? '빛과 그늘이 오가는 색' : '고요한 톤에 온기 한 점'; }
+  else if(a>.2){ styleEn+=', vivid luminous colors, joyful energy'; moodStyleKo='생기 넘치는 색'; }
   else { styleEn+=', warm rich harmonious colors, serene mood'; moodStyleKo='따뜻하고 고요한 색'; }
   if(isKid && styleChoice.k==='auto') styleEn+=', award-winning children\'s picture book quality, charming character design, expressive friendly faces, higher saturation';
-  styleEn += palette==='warm' ? ', warm color palette' : ', deep blue and cool palette with warm accents';
+  styleEn += palette==='warm' ? ', warm color palette' : palette==='cool' ? ', deep blue and cool palette with warm accents' : ', balanced palette weaving warm and cool tones';
   if(wx) styleEn += ', '+wx.lt;
   styleEn += lively ? ', lively rhythm and playful sense of movement' : ', quiet serene stillness';
 
@@ -753,16 +787,61 @@ function analyze(){
   if(av) styleEn += ', peaceful and safe scene, absolutely no '+av.ae;
   styleEn += ', masterful composition and lighting, award-winning illustration quality, vertical 2:3 composition, no text, no letters, no watermark';
 
-  const colorKo=cs.map(c=>c.w).join('·')+' 계열('+(palette==='warm'?'따뜻한 쪽':'차분한 쪽')+')';
-  const senseKo=`색은 ${colorKo}, 형태는 ${shape.ko}, 자리는 ${space.w}, 소리는 ${sound.ko}`+(wx?`, 마음 날씨는 ${wx.ko}`:'');
+  // 숨은 신호: 망설임(25초↑)·즉답(4초↓), 가장 먼저 고른 것
+  const imp=[]; const T=S.timing||{};
+  const lab={emotions:'감정',desires:'바람',memories:'기억',avoids:'주인공의 시련',metaphors:'자기 은유'};
+  for(const k in lab){ const ms=T[k]; if(!ms) continue;
+    if(ms>25000) imp.push(`${lab[k]} 고르기에서 오래 망설임(${Math.round(ms/1000)}초) — 마음이 뚜렷하지 않거나 양가적`);
+    else if(ms<4000) imp.push(`${lab[k]}은 ${Math.round(ms/1000)}초 만에 골라 — 이 마음은 매우 뚜렷함`); }
+  if(S.picks.emotions[0]) imp.push(`가장 먼저 고른 감정: ${S.picks.emotions[0]}`);
+  if(S.picks.desires[0]) imp.push(`가장 먼저 고른 바람: ${S.picks.desires[0]}`);
+  const implicitKo=imp.join(' / ');
+  const colorKo=cs.map(c=>c.w).join('·')+(palette==='warm'?' — 따뜻함에 끌림':palette==='cool'?' — 차분함에 끌림':' — 따뜻함과 차분함이 섞임');
+  const senseKo=`고른 색은 ${colorKo}, 끌린 형태는 ${shape.ko}, 머물고 싶은 자리는 ${space.w}, 마음에 닿은 소리는 ${sound.ko}`+(wx?`, 마음속 날씨는 ${wx.ko}`:'');
   const styleKo=`${media.ko} · ${abs_.ko} · ${det.ko} (${moodStyleKo}${wx?', '+wx.ko+' 빛':''}) · ${fig.ko}`;
   return {v,a,need,palette,needKo,moodKo,styleKo,styleEn,
-    colorKo,shapeKo:shape.ko,spaceKo:space.w,soundKo:sound.ko,memoryKo,avoidKo,senseKo};
+    colorKo,shapeKo:shape.ko,spaceKo:space.w,soundKo:sound.ko,memoryKo,avoidKo,senseKo,implicitKo};
 }
 
 
+/* ═══════════ 문의 비밀번호 → 대기열 (한 번에 한 사람) ═══════════ */
+let qPoll=null, hb=null;
+async function qapi(body){ const r=await fetch('/api/queue',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  const d=await r.json(); if(!r.ok) throw new Error(d.error||'오류'); return d; }
+function openGate(){
+  if(MASTER){ joinQueue(''); return; }
+  show('scr-gate'); $('gateIn').value=''; setTimeout(()=>$('gateIn').focus(),400);
+}
+$('gateBtn').onclick=()=>joinQueue($('gateIn').value.trim());
+$('gateIn').addEventListener('keydown',e=>{ if(e.key==='Enter') $('gateBtn').click(); });
+async function joinQueue(code){
+  if(!MASTER && code.length!==5){ alert('다섯 자리 번호를 넣어주세요.'); return; }
+  try{
+    const d=await qapi({action:'join',code,master:MASTER});
+    S.ticket=d.ticket; Snd.ting();
+    if(d.active){ startCreate(); return; }
+    show('scr-queue'); pollQueue();
+  }catch(e){ alert(e.message); }
+}
+async function pollQueue(){
+  clearInterval(qPoll);
+  const tick=async()=>{
+    try{ const d=await qapi({action:'status',ticket:S.ticket});
+      if(d.active){ clearInterval(qPoll); Snd.chime(); startCreate(); return; }
+      const n=d.ahead||0;
+      $('qmsg').textContent = n<=0 ? '곧 차례예요' : `앞에 ${n}명이 기다리고 있어요`;
+      $('qsub').innerHTML = '문은 한 번에 한 사람에게만 열려요.<br>'+(n>0?`예상 대기 약 ${n*4}분 · `:'')+'이 화면을 닫지 말고 잠시만 기다려 주세요.';
+    }catch(e){ $('qmsg').textContent='연결을 다시 시도하는 중'; }
+  };
+  await tick(); qPoll=setInterval(tick,4000);
+}
+function heartbeat(on){ clearInterval(hb); if(on) hb=setInterval(()=>qapi({action:'ping',ticket:S.ticket}).catch(()=>{}),30000); }
+function queueDone(){ heartbeat(false); if(S.ticket) qapi({action:'done',ticket:S.ticket}).catch(()=>{}); }
+addEventListener('pagehide',()=>{ if(S.ticket && navigator.sendBeacon)
+  navigator.sendBeacon('/api/queue',new Blob([JSON.stringify({action:'done',ticket:S.ticket})],{type:'application/json'})); });
+
 /* ═══════════ 생성 (Claude → gpt-image-2) — 글과 그림이 다 완성된 뒤 책이 열립니다 ═══════════ */
-const STORYMSGS=['마음의 별자리를 읽는 중','작가 요정이 첫 문장을 고르는 중','주인공에게 어울리는 이름을 짓는 중','이야기의 씨앗에 물을 주는 중','문장들이 나란히 줄을 서는 중'];
+const STORYMSGS=['마음의 별자리를 읽는 중','작가 요정이 첫 문장을 고르는 중','주인공에게 어울리는 이름을 짓는 중','이야기의 씨앗에 물을 주는 중','편집자 요정이 빨간 펜으로 퇴고하는 중','문장들이 나란히 줄을 서는 중'];
 const IMGMSGS=['물감을 개는 중','붓끝에 별빛을 묻히는 중','달빛으로 밑그림을 그리는 중','금박을 조심조심 입히는 중','물감이 마르길 기다리는 중','그림 요정이 마지막 손질을 하는 중','액자의 먼지를 닦는 중'];
 let loadTimer=null, msgPool=STORYMSGS;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -773,45 +852,65 @@ function setProg(units,stat){
 function bumpImg(){ const ok=S.images.filter(Boolean).length;
   setProg(2+ok, `이야기 완성 · 그림 ${ok}/4장 완성`); }
 async function startCreate(){
-  show('scr-loading'); $('loaderr').style.display='none'; Snd.door();
+  show('scr-loading'); $('loaderr').style.display='none'; Snd.door(); heartbeat(true);
   const A=S.analysis;
   $('loadread').textContent=`읽어낸 마음 — ${A.moodKo}. ${A.senseKo}. 마음이 바라는 것은 ‘${A.needKo}’. 그림은 ${A.styleKo}로 그립니다.`;
   msgPool=STORYMSGS; let mi=0; $('loadmsg').textContent=msgPool[0];
   clearInterval(loadTimer); loadTimer=setInterval(()=>{ mi=(mi+1)%msgPool.length; $('loadmsg').textContent=msgPool[mi]; },3200);
-  setProg(0,'이야기를 짓기 시작했어요');
+  const post=async(body)=>{ const r=await fetch('/api/story',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json(); if(!r.ok) throw new Error(d.error||'오류'); return d; };
+  const base={mode:S.mode,master:MASTER,user:S.user,ticket:S.ticket,
+    analysis:{moodKo:A.moodKo,needKo:A.needKo,styleKo:A.styleKo,senseKo:A.senseKo,memoryKo:A.memoryKo,avoidKo:A.avoidKo,implicitKo:A.implicitKo}};
   try{
-    const r=await fetch('/api/story',{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({mode:S.mode,picks:S.picks,master:MASTER,user:S.user,analysis:{moodKo:A.moodKo,needKo:A.needKo,styleKo:A.styleKo,senseKo:A.senseKo,memoryKo:A.memoryKo,avoidKo:A.avoidKo}})});
-    const data=await r.json();
-    if(!r.ok) throw new Error(data.error||'오류');
-    S.story=data.story; S.recId=data.recId||null; S.images=[null,null,null,null]; S.page=0;
-    if(!MASTER) lifeUp();
-    buildBook();
-    msgPool=IMGMSGS; setProg(2,'이야기 완성! 이제 그림을 그려요 (2~4분 걸릴 수 있어요)');
-    for(const pair of [[0,1],[2,3]]) await Promise.all(pair.map(i=>fetchOneAuto(i)));
+    if(!S.story){
+      if(S.draft){ // 초고는 있고 퇴고만 남은 경우 → 퇴고부터 이어서
+        setProg(1,'퇴고를 이어서 진행해요');
+        const d=await post(Object.assign({edit:true,draft:S.draft,picks:S.picks},base));
+        S.story=d.story; S.recId=d.recId||null; S.draft=null;
+      } else {
+        setProg(0,'이야기를 짓기 시작했어요');
+        const d=await post(Object.assign({picks:S.picks},base));
+        if(!MASTER) lifeUp();
+        if(d.edited===false){ S.draft=d.story;
+          throw new Error('이야기는 지어졌지만 퇴고 단계에서 잠시 멈췄어요. 계속하기를 누르면 퇴고부터 이어서 진행합니다.'); }
+        S.story=d.story; S.recId=d.recId||null;
+      }
+      S.images=[null,null,null,null]; S.page=0; buildBook();
+    }
+    msgPool=IMGMSGS;
+    if(!S.images[0]){ setProg(2,'이야기 완성! 먼저 표지의 주인공을 그려요'); await fetchOneAuto(0); }
+    const missing=[1,2,3].filter(i=>!S.images[i]);
+    if(missing.length){ setProg(3,'주인공 완성 · 같은 주인공으로 장면을 그려요'); await Promise.all(missing.map(i=>fetchOneAuto(i))); }
     clearInterval(loadTimer);
     const fails=4-S.images.filter(Boolean).length;
     setProg(6, fails? `그림 ${fails}장은 완성하지 못했어요 — 책 안에서 다시 그릴 수 있어요` : '동화책이 완성됐어요!');
     Snd.chime(); await sleep(700);
+    queueDone();
     doorWipe(()=>show('scr-book'));
   }catch(e){
     clearInterval(loadTimer);
-    $('loadmsg').textContent='문이 열리지 않았어요';
+    $('loadmsg').textContent='잠시 멈췄어요';
     const eb=$('loaderr'); eb.style.display='block'; eb.innerHTML='';
     eb.appendChild(document.createTextNode(e.message)); eb.appendChild(document.createElement('br'));
-    const rb=document.createElement('button'); rb.className='btn ghost'; rb.style.marginTop='12px'; rb.textContent='다시 시도';
+    const rb=document.createElement('button'); rb.className='btn'; rb.style.marginTop='12px'; rb.textContent='계속하기';
     rb.onclick=startCreate; eb.appendChild(rb);
-    const hb=document.createElement('button'); hb.className='btn ghost'; hb.style.margin='12px 0 0 8px'; hb.textContent='처음으로';
-    hb.onclick=()=>location.reload(); eb.appendChild(hb);
+    const hb2=document.createElement('button'); hb2.className='btn ghost'; hb2.style.margin='12px 0 0 8px'; hb2.textContent='처음으로';
+    hb2.onclick=()=>{ queueDone(); location.reload(); }; eb.appendChild(hb2);
   }
 }
 function imagePrompt(i){ // 0=표지, 1~3=장면
   const base = i===0 ? S.story.coverImagePrompt : S.story.scenes[i-1].imagePrompt;
-  return base+', '+S.analysis.styleEn;
+  const sheet = S.story.characterSheet ? 'Main character (keep identical in every image): '+S.story.characterSheet+'. Scene: ' : '';
+  return sheet+base+', '+S.analysis.styleEn;
+}
+function refPayload(i){ // 장면 그림은 표지를 참조 이미지로
+  if(i===0 || !S.images[0]) return {};
+  const m=S.images[0].match(/^data:([^;]+);base64,(.*)$/); if(!m) return {};
+  return { refB64:m[2], refMime:m[1] };
 }
 async function fetchOnce(i){
   const r=await fetch('/api/image',{method:'POST',headers:{'content-type':'application/json'},
-    body:JSON.stringify({prompt:imagePrompt(i),master:MASTER,recId:S.recId,slot:i})});
+    body:JSON.stringify(Object.assign({prompt:imagePrompt(i),master:MASTER,recId:S.recId,slot:i},refPayload(i)))});
   const data=await r.json();
   if(!r.ok) throw new Error(data.error||'오류');
   let b64, mime='image/png';

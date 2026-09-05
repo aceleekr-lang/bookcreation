@@ -37,6 +37,12 @@ td .mini{font:inherit;font-size:.78rem;padding:6px 10px;margin-right:4px}
 #detail .story{white-space:pre-wrap;line-height:1.95;font-size:.95rem;font-family:'Gowun Batang',serif;margin-top:8px;text-wrap:pretty}
 #detail .btns{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
 #detail .btns button{background:#efe3c8;border-color:#c9b184;color:#5a4a28}
+.gatebox{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px;padding:18px 22px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(240,195,107,.18),rgba(221,143,126,.12));border:1px solid rgba(240,195,107,.45)}
+.gl{font-size:.78rem;letter-spacing:.2em;color:#f8dfa8}
+.gcode{font-family:'Gowun Batang',serif;font-size:2.6rem;letter-spacing:.35em;color:#fff;text-shadow:0 0 18px rgba(240,195,107,.6);line-height:1.2}
+.gside{font-size:.88rem;opacity:.9;line-height:1.9;text-align:right}
+.gside b{color:#f8dfa8}
 #gate{max-width:420px;margin:80px auto;text-align:center}
 #gate input{width:100%;text-align:center;margin:16px 0 12px}
 .note{font-size:.78rem;opacity:.6;line-height:1.7;margin-top:10px}
@@ -56,6 +62,10 @@ td .mini{font:inherit;font-size:.78rem;padding:6px 10px;margin-right:4px}
 
   <!-- 본 화면 -->
   <div id="main" style="display:none">
+    <div class="gatebox">
+      <div><div class="gl">지금 문의 비밀번호</div><div class="gcode" id="gCode">·····</div></div>
+      <div class="gside"><div>다음 번호까지 <b id="gLeft">--</b></div><div>대기 <b id="gQueue">0</b>명 · 진행 중 <b id="gActive">없음</b></div></div>
+    </div>
     <h1>이야기의 문 · 보관함</h1>
     <p class="sub">수강생들이 만든 동화가 여기 쌓입니다. 행을 누르면 내용을 볼 수 있어요.</p>
     <div class="bar">
@@ -117,7 +127,16 @@ $('keyBtn').onclick=()=>{ KEY=$('keyIn').value.trim(); if(KEY) enter(); };
 $('keyIn').addEventListener('keydown',e=>{ if(e.key==='Enter') $('keyBtn').click(); });
 $('logoutBtn').onclick=()=>{ localStorage.removeItem('sd_admin_key'); location.reload(); };
 
+let gateTimer=null;
+async function gateTick(){
+  try{ const d=await api('gate');
+    $('gCode').textContent=d.code; const m=Math.floor(d.left/60), s=d.left%60;
+    $('gLeft').textContent=m+':'+String(s).padStart(2,'0');
+    $('gQueue').textContent=d.queue; $('gActive').textContent=d.active?'1명':'없음';
+  }catch(e){ $('gCode').textContent='-----'; }
+}
 async function load(){
+  clearInterval(gateTimer); gateTick(); gateTimer=setInterval(gateTick,5000);
   $('rows').innerHTML=''; $('stat').textContent='불러오는 중…';
   try{
     const d=await api('list'); ITEMS=d.items||[];
