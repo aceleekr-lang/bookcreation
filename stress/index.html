@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>숨, 고르기 — 마음 점검과 풀기</title>
+<meta name="description" content="지금 내 마음 상태를 살펴보고, 나에게 맞는 방법으로 풀어봅니다.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Jua&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{
+  --bg:#0F2630; --bg2:#173846; --fg:#DDEAE7; --dim:#8DA9A7;
+  --accent:#6FD0C0; --accent2:#E8B93F; --line:rgba(221,234,231,.15);
+  --radius:14px; --display:"Gowun Batang",serif;
+  --body:"Pretendard Variable",Pretendard,-apple-system,sans-serif;
+}
+body[data-mode="kid"]{
+  --bg:#FFF0CF; --bg2:#FFFFFF; --fg:#2B2B3A; --dim:#7C7C90;
+  --accent:#FF5C8A; --accent2:#3FC1E0; --line:rgba(43,43,58,.12);
+  --radius:22px; --display:"Jua",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--body);
+  font-size:16px; line-height:1.65; letter-spacing:-.01em;
+  transition:background .5s ease,color .5s ease;
+  padding:0 20px calc(64px + env(safe-area-inset-bottom));
+}
+.wrap{max-width:460px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:-.02em;margin:0}
+h1{font-size:2rem;line-height:1.25}
+h2{font-size:1.4rem;line-height:1.35;margin-bottom:10px}
+h3{font-size:1.08rem;margin-bottom:6px}
+p{margin:0 0 12px}
+.dim{color:var(--dim);font-size:.9rem;line-height:1.6}
+.screen{display:none;padding-top:36px;animation:in .45s ease both}
+.screen.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+button{font-family:inherit;font-size:1rem;color:inherit;border:0;background:none;cursor:pointer}
+.btn{
+  display:block;width:100%;padding:15px 18px;border-radius:var(--radius);
+  background:var(--accent);color:#07202A;font-weight:700;margin-top:12px;
+  transition:transform .12s ease,filter .2s ease;
+}
+body[data-mode="kid"] .btn{color:#fff}
+.btn:active{transform:scale(.985)}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--fg);font-weight:500}
+.btn[disabled]{opacity:.35;pointer-events:none}
+.card{background:var(--bg2);border-radius:var(--radius);padding:18px;margin-bottom:12px;border:1px solid var(--line)}
+:focus-visible{outline:2px solid var(--accent2);outline-offset:3px}
+
+/* 표지 */
+.hero{height:210px;display:grid;place-items:center;margin:20px 0 6px}
+.orb{width:118px;height:118px;border-radius:50%;
+  background:radial-gradient(circle at 35% 32%,var(--accent),transparent 68%),
+             radial-gradient(circle at 70% 75%,var(--accent2),transparent 62%);
+  filter:blur(.4px);animation:breathe 9s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(.82);opacity:.72}45%{transform:scale(1.14);opacity:1}}
+@media (prefers-reduced-motion:reduce){.orb{animation:none}.screen{animation:none}}
+.modes{display:grid;gap:10px;margin-top:26px}
+.mode{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid var(--line);
+  border-radius:var(--radius);background:var(--bg2);text-align:left;width:100%}
+.mode b{font-family:var(--display);font-size:1.12rem;font-weight:400;display:block}
+.mode span{font-size:.85rem;color:var(--dim)}
+.mode i{font-style:normal;font-size:1.5rem;width:34px;text-align:center}
+
+/* 진행 */
+.bar{height:3px;background:var(--line);border-radius:3px;overflow:hidden;margin:0 0 26px}
+.bar>i{display:block;height:100%;background:var(--accent);width:0;transition:width .35s ease}
+.step{font-size:.8rem;color:var(--dim);margin-bottom:8px}
+
+/* 문항 */
+.q{font-family:var(--display);font-size:1.32rem;line-height:1.45;margin:0 0 22px}
+.opts{display:grid;gap:8px}
+.opt{width:100%;text-align:left;padding:13px 16px;border:1px solid var(--line);
+  border-radius:var(--radius);background:var(--bg2);transition:border-color .15s,background .15s}
+.opt.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--bg2))}
+.swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sw{aspect-ratio:1;border-radius:var(--radius);border:2px solid transparent;transition:transform .15s}
+.sw.sel{border-color:var(--fg);transform:scale(.93)}
+.shapes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.shape{aspect-ratio:1;display:grid;place-items:center;background:var(--bg2);
+  border:1px solid var(--line);border-radius:var(--radius)}
+.shape.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--bg2))}
+.shape svg{width:52%;height:52%;stroke:var(--fg);fill:none;stroke-width:1.6}
+
+/* 결과 */
+.gauge{display:flex;align-items:baseline;gap:10px;margin:2px 0 14px}
+.gauge b{font-family:var(--display);font-size:3.2rem;line-height:1}
+.track{height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin-bottom:6px}
+.track>i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .9s ease}
+.scale{display:flex;justify-content:space-between;font-size:.75rem;color:var(--dim)}
+.typebox{border-left:3px solid var(--accent);padding-left:14px;margin:22px 0}
+.typebox b{font-family:var(--display);font-size:1.35rem;font-weight:400;display:block;margin-bottom:4px}
+.tools{display:grid;gap:10px;margin-top:8px}
+.tool{display:flex;align-items:center;gap:14px;padding:15px 16px;background:var(--bg2);
+  border:1px solid var(--line);border-radius:var(--radius);text-align:left;width:100%}
+.tool i{font-style:normal;font-size:1.4rem;width:30px;text-align:center}
+.tool b{font-weight:600;font-size:1rem;display:block}
+.tool span{font-size:.83rem;color:var(--dim)}
+.why{margin-top:12px;font-size:.85rem;color:var(--dim)}
+.why summary{cursor:pointer;padding:8px 0;list-style:none;border-bottom:1px solid var(--line)}
+.why summary::-webkit-details-marker{display:none}
+.why summary::after{content:"＋";float:right}
+.why details[open] summary::after{content:"－"}
+.why ul{margin:12px 0 0;padding-left:16px;line-height:1.8}
+.agree{display:flex;gap:10px;align-items:flex-start;font-size:.85rem;color:var(--dim);
+  line-height:1.55;padding:14px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius)}
+.agree input{width:20px;height:20px;flex:0 0 auto;accent-color:var(--accent);margin:0}
+.note{font-size:.82rem;color:var(--dim);border-top:1px solid var(--line);padding-top:14px;margin-top:26px}
+
+/* 호흡 */
+.breathstage{height:290px;display:grid;place-items:center;position:relative;margin:10px 0}
+.bcircle{width:80px;height:80px;border-radius:50%;background:var(--accent);opacity:.85;
+  transition:transform var(--t,4s) cubic-bezier(.4,0,.4,1),opacity var(--t,4s) ease}
+.bcircle.big{transform:scale(2.55);opacity:1}
+.bphase{position:absolute;font-family:var(--display);font-size:1.25rem}
+.bcount{position:absolute;bottom:14px;font-size:.85rem;color:var(--dim)}
+.pills{display:flex;gap:8px;margin-bottom:6px}
+.pill{flex:1;padding:10px;border:1px solid var(--line);border-radius:999px;font-size:.88rem;background:var(--bg2)}
+.pill.sel{border-color:var(--accent);color:var(--accent)}
+
+/* 처방 */
+.act{display:flex;gap:12px;align-items:flex-start;padding:16px;background:var(--bg2);
+  border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px;width:100%;text-align:left}
+.act.done{opacity:.5}
+.chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--dim);flex:0 0 auto;margin-top:2px;display:grid;place-items:center;font-size:.75rem}
+.act.done .chk{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+
+/* 기록 */
+.moods{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.mood{padding:12px 4px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg2);font-size:.78rem}
+.mood.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,var(--bg2))}
+.mood i{display:block;font-style:normal;font-size:1.3rem;margin-bottom:3px}
+textarea{width:100%;min-height:84px;padding:14px;border-radius:var(--radius);resize:vertical;
+  background:var(--bg2);border:1px solid var(--line);color:var(--fg);font:inherit;font-size:.95rem}
+.chart{display:flex;align-items:flex-end;gap:6px;height:110px;margin:16px 0 6px}
+.chart div{flex:1;background:var(--accent);border-radius:6px 6px 0 0;min-height:4px;opacity:.85}
+.chartx{display:flex;gap:6px;font-size:.7rem;color:var(--dim)}
+.chartx span{flex:1;text-align:center}
+.logline{display:flex;gap:10px;font-size:.88rem;padding:10px 0;border-bottom:1px solid var(--line)}
+.logline em{font-style:normal;color:var(--dim);flex:0 0 52px;font-size:.8rem}
+
+/* 놀이 */
+.play{position:relative;height:330px;border-radius:var(--radius);overflow:hidden;
+  background:linear-gradient(#BEE9F7,#FFF6DF);margin-bottom:12px;touch-action:manipulation}
+.cloud{position:absolute;width:74px;height:46px;border-radius:40px;background:#9AA3AE;
+  box-shadow:18px -12px 0 -4px #9AA3AE,-18px -8px 0 -8px #9AA3AE;transition:opacity .25s,transform .25s}
+.cloud.gone{opacity:0;transform:scale(1.5)}
+.sun{position:absolute;top:26px;left:50%;transform:translateX(-50%);width:70px;height:70px;
+  border-radius:50%;background:#FFC93C;box-shadow:0 0 0 14px rgba(255,201,60,.28)}
+.playhud{display:flex;justify-content:space-between;font-size:.9rem;margin-bottom:8px;color:var(--dim)}
+
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);
+  border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.back{font-size:.88rem;color:var(--dim);padding:8px 0;margin-top:8px}
+.field{width:100%;padding:13px 15px;border-radius:var(--radius);background:var(--bg2);
+  border:1px solid var(--line);color:var(--fg);font:inherit;margin-bottom:10px}
+</style>
+</head>
+<body data-mode="adult">
+<div class="wrap">
+
+<!-- 0. 시작 -->
+<section class="screen on" id="s-home">
+  <div class="hero"><div class="orb"></div></div>
+  <h1>숨, 고르기</h1>
+  <p class="dim" style="margin-top:10px">지금 마음이 어디쯤 있는지 살펴보고,<br>나에게 맞는 방법으로 풀어봅니다. 5분이면 됩니다.</p>
+  <div class="modes">
+    <button class="mode" onclick="start('adult')"><i>◐</i><span><b>어른의 마음</b><span>지난 한 달을 돌아봅니다</span></span></button>
+    <button class="mode" onclick="start('kid')"><i>◔</i><span><b>아이의 마음</b><span>요즘 기분을 알아봐요</span></span></button>
+  </div>
+  <p class="note">이 앱은 검사나 진단이 아닙니다. 마음을 한 번 들여다보는 도구로 써주세요. 힘든 마음이 오래 이어진다면 가까운 사람이나 전문가와 이야기 나누는 편이 좋습니다.</p>
+</section>
+
+<!-- 0-1. 누가 하나요 -->
+<section class="screen" id="s-who">
+  <h2 id="whohead">누가 하는지 알려주세요</h2>
+  <p class="dim" id="wholead"></p>
+  <div style="margin-top:18px">
+    <input class="field" id="wname" placeholder="이름" autocomplete="name">
+    <input class="field" id="wcontact" placeholder="연락처(전화번호 또는 네이버 아이디)" autocomplete="off">
+  </div>
+  <label class="agree" id="wagree" style="display:none">
+    <input type="checkbox" id="wcheck">
+    <span>보호자(법정대리인)가 아이의 이름·연락처 수집과 결과 보관에 동의합니다. 동의는 언제든 철회할 수 있고, 철회하면 기록을 지웁니다.</span>
+  </label>
+  <button class="btn" onclick="beginQuiz()">시작하기</button>
+  <button class="btn ghost" onclick="go('s-home')">뒤로</button>
+  <p class="note" id="whonote"></p>
+</section>
+
+<!-- 1. 설문 -->
+<section class="screen" id="s-quiz">
+  <div class="bar"><i id="qbar"></i></div>
+  <div class="step" id="qstep"></div>
+  <p class="q" id="qtext"></p>
+  <div class="opts" id="qopts"></div>
+  <button class="back" id="qback" onclick="quizBack()">← 이전</button>
+</section>
+
+<!-- 2. 선택 라운드 -->
+<section class="screen" id="s-pick">
+  <div class="bar"><i id="pbar"></i></div>
+  <div class="step" id="pstep"></div>
+  <p class="q" id="ptext"></p>
+  <div id="pbody"></div>
+  <button class="btn" id="pnext" onclick="pickNext()" disabled>다음</button>
+</section>
+
+<!-- 3. 결과 -->
+<section class="screen" id="s-result">
+  <h2 id="rhead">지금의 마음</h2>
+  <div class="gauge"><b id="rscore">0</b><span class="dim" id="rband"></span></div>
+  <div class="track"><i id="rtrack"></i></div>
+  <div class="scale"><span>낮음</span><span>보통</span><span>높음</span></div>
+  <div class="typebox"><b id="rtype"></b><span class="dim" id="rtypedesc"></span></div>
+  <div class="card" id="rai"><span class="spin"></span> 마음을 읽는 중…</div>
+  <div class="why" id="rwhy"></div>
+  <h3 style="margin-top:26px">지금 해보면 좋은 것</h3>
+  <div class="tools">
+    <button class="tool" onclick="go('s-breath')"><i>◎</i><span><b>호흡 고르기</b><span>3분이면 몸이 먼저 가라앉습니다</span></span></button>
+    <button class="tool" onclick="openActs()"><i>✓</i><span><b>오늘의 세 가지</b><span>내 유형에 맞춘 작은 행동</span></span></button>
+    <button class="tool" onclick="openLog()"><i>✎</i><span><b>마음 기록</b><span>한 줄 남기고 흐름 보기</span></span></button>
+    <button class="tool" id="tool-play" onclick="openPlay()"><i>☁</i><span><b>먹구름 걷어내기</b><span>손으로 톡톡, 마음도 톡톡</span></span></button>
+  </div>
+  <p class="note">점수는 오늘의 상태일 뿐 나를 정의하지 않습니다.</p>
+  <button class="btn ghost" onclick="location.reload()">처음으로</button>
+</section>
+
+<!-- 4. 호흡 -->
+<section class="screen" id="s-breath">
+  <h2>호흡 고르기</h2>
+  <div class="pills" id="bpills"></div>
+  <p class="dim" id="bdesc"></p>
+  <div class="breathstage">
+    <div class="bcircle" id="bcircle"></div>
+    <div class="bphase" id="bphase">준비</div>
+    <div class="bcount" id="bcount">4회를 권합니다</div>
+  </div>
+  <button class="btn" id="bbtn" onclick="toggleBreath()">시작하기</button>
+  <button class="btn ghost" onclick="go('s-result')">돌아가기</button>
+</section>
+
+<!-- 5. 활동 처방 -->
+<section class="screen" id="s-acts">
+  <h2>오늘의 세 가지</h2>
+  <p class="dim" id="actlead"></p>
+  <div id="actlist" style="margin-top:16px"></div>
+  <button class="btn ghost" onclick="go('s-result')">돌아가기</button>
+</section>
+
+<!-- 6. 기록 -->
+<section class="screen" id="s-log">
+  <h2>마음 기록</h2>
+  <p class="dim">오늘 마음은 어느 쪽에 가까운가요?</p>
+  <div class="moods" id="moods"></div>
+  <textarea id="logtext" placeholder="한 줄이면 충분합니다. 오늘 무엇이 마음을 건드렸나요?"></textarea>
+  <button class="btn" onclick="saveLog()">기록 남기기</button>
+  <div id="loghist"></div>
+  <button class="btn ghost" onclick="go('s-result')">돌아가기</button>
+</section>
+
+<!-- 7. 놀이 -->
+<section class="screen" id="s-play">
+  <h2>먹구름 걷어내기</h2>
+  <div class="playhud"><span id="pleft">남은 구름 12</span><span id="ptime">30초</span></div>
+  <div class="play" id="playbox"></div>
+  <button class="btn" id="playbtn" onclick="startPlay()">시작</button>
+  <button class="btn ghost" onclick="go('s-result')">돌아가기</button>
+</section>
+
+</div>
+<script>
+/* ── 유틸 ───────────────────────────── */
+const $=id=>document.getElementById(id);
+const LS={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},
+          set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');scrollTo(0,0)}
+
+const S={mode:'adult',qi:0,answers:[],pi:0,picks:[],e:0,d:0,score:0,type:null,uid:LS.get('sg_uid',null)};
+if(!S.uid){S.uid='u'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);LS.set('sg_uid',S.uid)}
+
+/* ── 문항 ───────────────────────────── */
+const PSS=[
+ ["예상치 못한 일 때문에 당황한 적이 있다",0],
+ ["중요한 일을 내가 통제할 수 없다고 느꼈다",0],
+ ["초조하거나 긴장이 쌓여 있다고 느꼈다",0],
+ ["내 문제를 다룰 능력이 있다고 느꼈다",1],
+ ["일이 내 뜻대로 되어간다고 느꼈다",1],
+ ["해야 할 일을 다 감당할 수 없다고 느꼈다",0],
+ ["짜증나는 일을 잘 넘길 수 있었다",1],
+ ["상황을 잘 잡고 있다고 느꼈다",1],
+ ["내 힘으로 어쩔 수 없는 일에 화가 났다",0],
+ ["문제가 너무 쌓여 넘어설 수 없다고 느꼈다",0]];
+const PSSOPT=["전혀 없었다","거의 없었다","가끔 있었다","자주 있었다","매우 자주 있었다"];
+const KID=[
+ ["밤에 잠이 잘 안 올 때가 있어",0],
+ ["배가 아프거나 머리가 아플 때가 있어",0],
+ ["별것 아닌 일에도 짜증이 나",0],
+ ["하고 싶은 걸 못 해서 답답해",0],
+ ["혼자 있고 싶을 때가 많아",0],
+ ["내 마음을 편하게 말할 사람이 있어",1]];
+const KIDOPT=["아니야","가끔","자주"];
+
+/* ── 선택 라운드 ─────────────────────── */
+const ROUNDS=[
+ {t:"눈이 먼저 가는 색을 하나 고르세요",k:"color",items:[
+  {v:"#C0392B",e:2,d:2},{v:"#E8952F",e:1,d:1},{v:"#3E8E5A",e:-1,d:-1},
+  {v:"#1F4E82",e:-1,d:-2},{v:"#8A8D93",e:-2,d:-1},{v:"#CBB6E0",e:0,d:-1}]},
+ {t:"지금 마음과 닮은 모양은",k:"shape",items:[
+  {v:"star",e:2,d:1},{v:"zig",e:2,d:-1},{v:"circle",e:-1,d:1},
+  {v:"spiral",e:-1,d:-2},{v:"grid",e:1,d:-2},{v:"blob",e:-2,d:-1}]},
+ {t:"오늘 하루를 보내고 싶은 곳은",k:"place",items:[
+  {v:"사람이 북적이는 거리",e:2,d:2},{v:"작고 낮은 다락방",e:-1,d:-2},
+  {v:"끝이 안 보이는 벌판",e:-2,d:1},{v:"물속, 소리가 먼 곳",e:-2,d:-2}]},
+ {t:"귀에 오래 남을 것 같은 소리는",k:"sound",items:[
+  {v:"빠르게 두드리는 북",e:2,d:1},{v:"창에 부딪는 빗소리",e:-1,d:-1},
+  {v:"멀리서 울리는 종의 여운",e:0,d:-2},{v:"아무 소리 없음",e:-2,d:-2}]}];
+const SHAPES={
+ star:'<polygon points="12,2 14.6,9 22,9 16,13.6 18.2,21 12,16.6 5.8,21 8,13.6 2,9 9.4,9"/>',
+ zig:'<polyline points="2,16 7,7 12,16 17,7 22,16"/>',
+ circle:'<circle cx="12" cy="12" r="9"/>',
+ spiral:'<path d="M12 12a3 3 0 1 1 3 3 5 5 0 1 1-5-5 7 7 0 1 1 7 7"/>',
+ grid:'<path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/>',
+ blob:'<path d="M6 9c2-5 9-6 12-2s1 9-3 11-9 1-10-3 0-4 1-6z"/>'};
+
+/* ── 유형 ───────────────────────────── */
+const TYPES={
+ tense:{n:"팽팽한 활",d:"에너지는 남아 있지만 계속 당겨져 있는 상태입니다. 쉬는 법을 잊은 쪽에 가깝습니다."},
+ wave:{n:"흔들리는 물결",d:"안에서 생각이 계속 움직입니다. 결정을 미루게 되고 잠들기 전이 길어집니다."},
+ ash:{n:"식은 재",d:"겉으로는 잘 지내지만 안쪽 연료가 줄었습니다. 즐겁던 일이 심드렁해집니다."},
+ fold:{n:"접힌 우산",d:"밖으로 향하던 것을 안으로 접어둔 상태입니다. 말수가 줄고 혼자가 편해집니다."}};
+const ACTS={
+ tense:{adult:["어깨와 턱에 힘이 들어갔는지 세 번 확인하고, 그때마다 내려놓기","오늘 할 일 목록에서 한 줄을 지우고 내일로 넘기기","저녁에 10분, 화면 없이 창밖만 보기"],
+        kid:["어깨를 꽉 올렸다가 툭 떨어뜨리기 다섯 번","오늘 안 해도 되는 일 하나 정해서 내일로 미루기","자기 전 10분, 화면 끄고 좋아하는 것 떠올리기"]},
+ wave:{adult:["머릿속 걱정을 종이에 다 적고, 내가 지금 할 수 있는 것에만 동그라미","잠들기 2시간 전부터 확인하지 않을 앱 하나 정하기","걱정 생각은 정해진 15분에만 하기로 시간 정해두기"],
+       kid:["걱정을 소리 내어 말하거나 그림으로 그려보기","자기 전에 좋았던 일 세 가지 말하기","걱정이 올라오면 손으로 숫자 열까지 세기"]},
+ ash:{adult:["오늘 한 가지는 목적 없이 하기 — 효율을 따지지 않는 일로","점심시간에 10분 밖으로 나가 햇빛 받기","예전에 좋아했던 것 중 하나를 15분만 다시 해보기"],
+      kid:["오늘은 잘 못해도 되는 놀이 하나 하기","밖에 나가 10분 햇빛 쐬기","좋아했던 것 중 하나를 다시 꺼내보기"]},
+ fold:{adult:["오늘 한 사람에게 안부 한 줄 보내기 — 답장은 기대하지 않기","집 밖에서 20분 걷기, 목적지 없이","혼자 있는 시간을 미리 정해두고, 그 시간은 죄책감 없이 쓰기"],
+       kid:["믿을 만한 어른 한 명에게 오늘 있었던 일 하나 말하기","밖에서 20분 걷거나 뛰기","혼자 쉬고 싶으면 그렇게 말하고 편하게 쉬기"]}};
+const MOODS=[["◉","아주 힘듦"],["◍","힘듦"],["◎","보통"],["◒","괜찮음"],["○","좋음"]];
+
+/* ── 진행 ───────────────────────────── */
+function start(m){
+  S.mode=m;document.body.dataset.mode=m;
+  $('tool-play').style.display=m==='kid'?'flex':'none';
+  const kid=m==='kid';
+  $('whohead').textContent=kid?'누가 하는지 알려줘':'누가 하는지 알려주세요';
+  $('wholead').textContent=kid
+    ?'결과를 보호자와 함께 보기 위해 적어요.'
+    :'결과를 확인하고 이어서 볼 수 있도록 남겨둡니다.';
+  $('wname').placeholder=kid?'이름 또는 별명':'이름';
+  $('wcontact').placeholder=kid?'보호자 연락처(전화번호)':'연락처(전화번호 또는 네이버 아이디)';
+  $('whonote').textContent=kid
+    ?'적어준 내용은 결과를 보호자에게 전하는 데에만 쓰고, 다른 곳에 넘기지 않아요.'
+    :'입력한 내용은 결과 확인과 운영자 문의 응대에만 사용하며, 제3자에게 제공하지 않습니다.';
+  $('wagree').style.display=kid?'flex':'none';
+  $('wcheck').checked=false;
+  const prev=LS.get('sg_who',null);
+  if(prev){$('wname').value=prev.name||'';$('wcontact').value=prev.contact||''}
+  go('s-who');
+}
+function beginQuiz(){
+  const name=$('wname').value.trim(),contact=$('wcontact').value.trim();
+  if(name.length<1){alert('이름을 적어주세요.');$('wname').focus();return}
+  if(contact.length<4){alert('연락처를 적어주세요.');$('wcontact').focus();return}
+  if(S.mode==='kid'&&!$('wcheck').checked){alert('보호자 동의에 체크해 주세요.');return}
+  S.consent=S.mode==='kid';
+  S.name=name;S.contact=contact;LS.set('sg_who',{name,contact});
+  S.qi=0;S.answers=[];renderQ();go('s-quiz');
+}
+function qset(){return S.mode==='kid'?KID:PSS}
+function qopt(){return S.mode==='kid'?KIDOPT:PSSOPT}
+function renderQ(){
+  const set=qset(),opts=qopt(),[text]=set[S.qi];
+  $('qstep').textContent=`마음 살피기 ${S.qi+1} / ${set.length}`;
+  $('qbar').style.width=(S.qi/set.length*100)+'%';
+  $('qtext').textContent=(S.mode==='kid'?'':'지난 한 달 동안, ')+text;
+  $('qback').style.visibility=S.qi?'visible':'hidden';
+  $('qopts').innerHTML=opts.map((o,i)=>
+    `<button class="opt${S.answers[S.qi]===i?' sel':''}" onclick="answer(${i})">${o}</button>`).join('');
+}
+function answer(i){
+  S.answers[S.qi]=i;
+  const set=qset();
+  if(S.qi<set.length-1){S.qi++;renderQ()}
+  else{S.pi=0;S.picks=[];renderP();go('s-pick')}
+}
+function quizBack(){if(S.qi){S.qi--;renderQ()}}
+
+function renderP(){
+  const r=ROUNDS[S.pi];
+  $('pstep').textContent=`느낌 고르기 ${S.pi+1} / ${ROUNDS.length}`;
+  $('pbar').style.width=(S.pi/ROUNDS.length*100)+'%';
+  $('ptext').textContent=r.t;
+  const sel=S.picks[S.pi];
+  if(r.k==='color')
+    $('pbody').innerHTML='<div class="swatches">'+r.items.map((it,i)=>
+      `<button class="sw${sel===i?' sel':''}" style="background:${it.v}" onclick="pick(${i})" aria-label="색 ${i+1}"></button>`).join('')+'</div>';
+  else if(r.k==='shape')
+    $('pbody').innerHTML='<div class="shapes">'+r.items.map((it,i)=>
+      `<button class="shape${sel===i?' sel':''}" onclick="pick(${i})" aria-label="모양 ${i+1}"><svg viewBox="0 0 24 24">${SHAPES[it.v]}</svg></button>`).join('')+'</div>';
+  else
+    $('pbody').innerHTML='<div class="opts">'+r.items.map((it,i)=>
+      `<button class="opt${sel===i?' sel':''}" onclick="pick(${i})">${it.v}</button>`).join('')+'</div>';
+  $('pnext').disabled=sel===undefined;
+  $('pnext').textContent=S.pi===ROUNDS.length-1?'결과 보기':'다음';
+}
+function pick(i){S.picks[S.pi]=i;renderP()}
+function pickNext(){
+  if(S.pi<ROUNDS.length-1){S.pi++;renderP()}
+  else finish();
+}
+
+function finish(){
+  // 점수
+  let raw=0;
+  if(S.mode==='kid'){
+    KID.forEach(([,rev],i)=>{const v=S.answers[i]??0;raw+=rev?(2-v)*2:v*2});
+    S.score=Math.round(raw/24*40);
+  }else{
+    PSS.forEach(([,rev],i)=>{const v=S.answers[i]??0;raw+=rev?4-v:v});
+    S.score=raw;
+  }
+  // 축
+  S.e=0;S.d=0;
+  ROUNDS.forEach((r,i)=>{const it=r.items[S.picks[i]];if(it){S.e+=it.e;S.d+=it.d}});
+  S.type=S.e>=1?(S.d>=0?'tense':'wave'):(S.d>=0?'ash':'fold');
+  const band=S.score<14?'낮은 편':S.score<27?'보통':'높은 편';
+  $('rscore').textContent=S.score;
+  $('rband').textContent=`/ 40 · ${band}`;
+  $('rtrack').style.width='0';
+  setTimeout(()=>{$('rtrack').style.width=Math.min(100,S.score/40*100)+'%'},80);
+  $('rtype').textContent=TYPES[S.type].n;
+  $('rtypedesc').textContent=TYPES[S.type].d;
+  $('rhead').textContent=S.mode==='kid'?'요즘 내 마음':'지금의 마음';
+  renderWhy(band);
+  go('s-result');
+  interpret(band);
+  record();
+}
+
+/* ── 판정 근거 ──────────────────────── */
+function renderWhy(band){
+  const up=ROUNDS.filter((r,i)=>(r.items[S.picks[i]]?.e||0)>0).length;
+  const inward=ROUNDS.filter((r,i)=>(r.items[S.picks[i]]?.d||0)<0).length;
+  const n=ROUNDS.length;
+  const eTxt=S.e>=1?'몸과 마음이 아직 켜져 있는 쪽':'에너지가 내려가 있는 쪽';
+  const dTxt=S.d>=0?'감정이 밖으로 향하는 쪽':'감정을 안으로 접어두는 쪽';
+  const src=S.mode==='kid'
+    ? '아동 스트레스 신체·정서 신호 문항 6개'
+    : 'PSS-10(지각된 스트레스 척도) 10개 문항';
+  $('rwhy').innerHTML=`<details><summary>이 결과가 나온 근거</summary><ul>
+    <li>${src} 합산 ${S.score}점 · ${band}</li>
+    <li>느낌 선택 ${n}개 중 ${up}개가 <b>${eTxt}</b>을 가리켰습니다</li>
+    <li>${n}개 중 ${inward}개가 <b>${dTxt}</b>을 가리켰습니다</li>
+    <li>두 방향이 만나는 자리가 «${TYPES[S.type].n}»입니다</li>
+    </ul><p style="margin:12px 0 0">고른 색·모양·장소·소리 자체에 정답이 있는 것은 아닙니다. 선택들이 모여 만드는 방향만 봅니다.</p></details>`;
+}
+
+/* ── AI 해석 ────────────────────────── */
+async function interpret(band){
+  const body={mode:S.mode,score:S.score,band:band,type:TYPES[S.type].n,
+    axes:{energy:S.e,direction:S.d},
+    picks:ROUNDS.map((r,i)=>r.items[S.picks[i]]?.v).filter(Boolean)};
+  try{
+    const res=await fetch('/api/stress-interpret',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok)throw 0;
+    const data=await res.json();
+    $('rai').innerHTML=data.text.split('\n').filter(Boolean).map(t=>`<p>${t}</p>`).join('')
+      .replace(/<p>(.*)<\/p>$/,'<p style="margin-bottom:0">$1</p>');
+  }catch(e){
+    $('rai').innerHTML='<p style="margin-bottom:0">'+fallback(band)+'</p>';
+  }
+  if(S.score>=30)$('rai').insertAdjacentHTML('beforeend',
+    '<p class="dim" style="margin:12px 0 0">마음의 부담이 꽤 큰 상태로 보입니다. 믿을 만한 사람에게 이야기하거나 상담을 받아보는 것을 권합니다.</p>');
+}
+function fallback(band){
+  const t=TYPES[S.type];
+  return `지금 마음의 부담은 ${band}입니다. ${t.d} 아래 방법 중 하나만 지금 해보세요. 전부 할 필요는 없습니다.`;
+}
+
+/* ── 저장 ───────────────────────────── */
+function record(){
+  fetch('/api/stress-record',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({uid:S.uid,name:S.name,contact:S.contact,consent:S.consent,
+      mode:S.mode,score:S.score,type:TYPES[S.type].n,
+      e:S.e,d:S.d,at:new Date().toISOString()})}).catch(()=>{});
+  const h=LS.get('sg_scores',[]);h.push({t:Date.now(),s:S.score});LS.set('sg_scores',h.slice(-30));
+}
+
+/* ── 호흡 ───────────────────────────── */
+const BREATH={
+ box:{n:"사각 호흡",d:"들이쉬고 멈추고 내쉬고 멈추기를 같은 길이로. 긴장을 빠르게 내립니다.",
+      seq:[["들이쉬기",4,1],["멈추기",4,1],["내쉬기",4,0],["멈추기",4,0]]},
+ f478:{n:"4-7-8",d:"내쉬는 시간을 길게 가져가 잠들기 전에 좋습니다.",
+      seq:[["들이쉬기",4,1],["멈추기",7,1],["내쉬기",8,0]]},
+ balloon:{n:"풍선 불기",d:"배를 풍선처럼 크게, 천천히 바람 빼기.",
+      seq:[["크게 들이쉬기",3,1],["잠깐 멈추기",3,1],["천천히 내쉬기",5,0]]}};
+let bKey='box',bRun=false,bTimer=null,bStep=0,bCycle=0;
+function renderBreath(){
+  const keys=S.mode==='kid'?['balloon','box']:['box','f478'];
+  if(!keys.includes(bKey))bKey=keys[0];
+  $('bpills').innerHTML=keys.map(k=>`<button class="pill${bKey===k?' sel':''}" onclick="setBreath('${k}')">${BREATH[k].n}</button>`).join('');
+  $('bdesc').textContent=BREATH[bKey].d;
+}
+function setBreath(k){if(bRun)toggleBreath();bKey=k;renderBreath()}
+function toggleBreath(){
+  if(bRun){stopBreath();return}
+  bRun=true;bStep=0;bCycle=0;$('bbtn').textContent='멈추기';stepBreath();
+}
+function stopBreath(){
+  bRun=false;clearTimeout(bTimer);$('bbtn').textContent='시작하기';
+  $('bcircle').classList.remove('big');$('bphase').textContent='준비';$('bcount').textContent='4회를 권합니다';
+}
+function stepBreath(){
+  if(!bRun)return;
+  const seq=BREATH[bKey].seq,[label,sec,big]=seq[bStep];
+  const c=$('bcircle');c.style.setProperty('--t',sec+'s');
+  big?c.classList.add('big'):c.classList.remove('big');
+  $('bphase').textContent=label;
+  $('bcount').textContent=`${bCycle+1}번째 · ${sec}초`;
+  beep(big?392:294);
+  bTimer=setTimeout(()=>{
+    bStep++;
+    if(bStep>=seq.length){bStep=0;bCycle++;
+      if(bCycle>=4){$('bphase').textContent='다 했습니다';$('bcount').textContent='어깨를 한 번 내려보세요';stopBreath();return}}
+    stepBreath();
+  },sec*1000);
+}
+let AC=null;
+function beep(f){
+  try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type='sine';o.frequency.value=f;g.gain.value=0;
+    o.connect(g);g.connect(AC.destination);o.start();
+    g.gain.linearRampToValueAtTime(.06,AC.currentTime+.05);
+    g.gain.linearRampToValueAtTime(0,AC.currentTime+.5);
+    o.stop(AC.currentTime+.55);
+  }catch(e){}
+}
+
+/* ── 활동 처방 ──────────────────────── */
+function openActs(){
+  const list=ACTS[S.type][S.mode],done=LS.get('sg_acts_'+S.type,[]);
+  $('actlead').textContent=`${TYPES[S.type].n} 유형에게 오늘 가장 잘 듣는 세 가지입니다.`;
+  $('actlist').innerHTML=list.map((a,i)=>
+    `<button class="act${done.includes(i)?' done':''}" onclick="toggleAct(${i})"><span class="chk">✓</span><span>${a}</span></button>`).join('');
+  go('s-acts');
+}
+function toggleAct(i){
+  const k='sg_acts_'+S.type;let d=LS.get(k,[]);
+  d=d.includes(i)?d.filter(x=>x!==i):[...d,i];LS.set(k,d);openActs();
+}
+
+/* ── 마음 기록 ──────────────────────── */
+let moodSel=null;
+function openLog(){
+  $('moods').innerHTML=MOODS.map((m,i)=>
+    `<button class="mood${moodSel===i?' sel':''}" onclick="moodSel=${i};openLog()"><i>${m[0]}</i>${m[1]}</button>`).join('');
+  drawLog();go('s-log');
+}
+function saveLog(){
+  if(moodSel===null){alert('오늘 마음을 먼저 골라주세요.');return}
+  const logs=LS.get('sg_logs',[]);
+  logs.push({t:Date.now(),m:moodSel+1,x:$('logtext').value.trim()});
+  LS.set('sg_logs',logs.slice(-60));
+  fetch('/api/stress-record',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({uid:S.uid,name:S.name,contact:S.contact,kind:'log',mood:moodSel+1,note:$('logtext').value.trim(),at:new Date().toISOString()})}).catch(()=>{});
+  $('logtext').value='';moodSel=null;openLog();
+}
+function drawLog(){
+  const logs=LS.get('sg_logs',[]).slice(-7);
+  if(!logs.length){$('loghist').innerHTML='<p class="dim" style="margin-top:20px">기록이 쌓이면 마음의 흐름이 그래프로 보입니다.</p>';return}
+  const bars=logs.map(l=>`<div style="height:${l.m/5*100}%"></div>`).join('');
+  const xs=logs.map(l=>{const d=new Date(l.t);return `<span>${d.getMonth()+1}/${d.getDate()}</span>`}).join('');
+  const lines=[...logs].reverse().filter(l=>l.x).map(l=>{
+    const d=new Date(l.t);
+    return `<div class="logline"><em>${d.getMonth()+1}/${d.getDate()}</em><span>${l.x.replace(/</g,'&lt;')}</span></div>`}).join('');
+  $('loghist').innerHTML=`<h3 style="margin-top:26px">마음의 흐름</h3><div class="chart">${bars}</div><div class="chartx">${xs}</div>${lines}`;
+}
+
+/* ── 놀이 ───────────────────────────── */
+let pTimer=null,pLeft=12,pSec=30;
+function openPlay(){$('playbox').innerHTML='<div class="sun" style="opacity:.25"></div>';go('s-play')}
+function startPlay(){
+  clearInterval(pTimer);pLeft=12;pSec=30;
+  const box=$('playbox');box.innerHTML='<div class="sun" style="opacity:.25"></div>';
+  const w=box.clientWidth-80,h=box.clientHeight-60;
+  for(let i=0;i<12;i++){
+    const c=document.createElement('div');c.className='cloud';
+    c.style.left=(20+Math.random()*w)+'px';c.style.top=(40+Math.random()*h)+'px';
+    c.onclick=()=>{if(c.classList.contains('gone'))return;
+      c.classList.add('gone');pLeft--;beep(520+Math.random()*160);
+      box.querySelector('.sun').style.opacity=(.25+(12-pLeft)/12*.75);
+      $('pleft').textContent='남은 구름 '+pLeft;
+      if(!pLeft)endPlay(true)};
+    box.appendChild(c);
+  }
+  $('pleft').textContent='남은 구름 12';$('playbtn').textContent='다시 하기';
+  pTimer=setInterval(()=>{pSec--;$('ptime').textContent=pSec+'초';if(pSec<=0)endPlay(false)},1000);
+}
+function endPlay(win){
+  clearInterval(pTimer);
+  $('ptime').textContent=win?'맑음!':'끝';
+  $('playbox').insertAdjacentHTML('beforeend',
+    `<div style="position:absolute;inset:auto 0 16px;text-align:center;font-family:var(--display);color:#2B2B3A">${win?'하늘이 다 맑아졌어요':'여기까지도 충분해요'}</div>`);
+}
+
+renderBreath();
+</script>
+</body>
+</html>
